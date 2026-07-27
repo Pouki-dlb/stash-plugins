@@ -15,7 +15,7 @@
   function ensureOverlay() {
     if (!overlay) {
       overlay = document.createElement("div");
-      overlay.id = "pouki-panic-overlay";
+      overlay.id = "panic-overlay";
       overlay.style.cssText =
         "position:fixed;inset:0;background:#000;z-index:2147483647;display:none";
     }
@@ -62,12 +62,12 @@
         if (l.parentNode) l.parentNode.removeChild(l);
       });
       var blank = document.createElement("link");
-      blank.id = "pouki-panic-favicon";
+      blank.id = "panic-favicon";
       blank.rel = "icon";
       blank.href = BLANK_FAVICON;
       document.head.appendChild(blank);
     } else {
-      var b = document.getElementById("pouki-panic-favicon");
+      var b = document.getElementById("panic-favicon");
       if (b && b.parentNode) b.parentNode.removeChild(b);
       if (savedIconLinks) {
         savedIconLinks.forEach(function (s) {
