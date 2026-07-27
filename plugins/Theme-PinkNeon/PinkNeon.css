@@ -1,0 +1,1636 @@
+/* -----------------------------------------------------------------------------
+   1. VARIABLES
+   -------------------------------------------------------------------------- */
+:root {
+  --custom-gray: #4d4d4d;
+  --custom-darker: #151b23;
+  --custom-dark: #212830;
+  --custom-pink: #e83e8c;
+
+  --pink-glow: 0 0 3px 1px color-mix(in srgb, var(--custom-pink) 90%, transparent),
+    0 0 10px 3px color-mix(in srgb, var(--custom-pink) 55%, transparent),
+    0 0 20px 7px color-mix(in srgb, var(--custom-pink) 28%, transparent);
+  --pink-focus: 0 0 2px 1px color-mix(in srgb, var(--custom-pink) 85%, transparent),
+    0 0 6px 2px color-mix(in srgb, var(--custom-pink) 45%, transparent);
+  --pink-underline-glow: 0 0 3px 1px color-mix(in srgb, var(--custom-pink) 85%, transparent),
+    0 0 8px 2px color-mix(in srgb, var(--custom-pink) 50%, transparent);
+  --gray-glow: 0 0 3px 1px color-mix(in srgb, var(--custom-gray) 90%, transparent),
+    0 0 10px 3px color-mix(in srgb, var(--custom-gray) 55%, transparent),
+    0 0 20px 7px color-mix(in srgb, var(--custom-gray) 28%, transparent);
+  --danger-glow: 0 0 3px 1px rgba(219, 55, 55, 0.9),
+    0 0 10px 3px rgba(219, 55, 55, 0.55),
+    0 0 20px 7px rgba(219, 55, 55, 0.28);
+  --success-glow: 0 0 3px 1px rgba(15, 153, 96, 0.9),
+    0 0 10px 3px rgba(15, 153, 96, 0.55),
+    0 0 20px 7px rgba(15, 153, 96, 0.28);
+
+  --icon-glow-red: drop-shadow(0 0 2px rgba(219, 55, 55, 0.95))
+    drop-shadow(0 0 5px rgba(219, 55, 55, 0.65))
+    drop-shadow(0 0 11px rgba(219, 55, 55, 0.35));
+  --icon-glow-green: drop-shadow(0 0 2px rgba(15, 153, 96, 0.95))
+    drop-shadow(0 0 5px rgba(15, 153, 96, 0.65))
+    drop-shadow(0 0 11px rgba(15, 153, 96, 0.35));
+  --icon-glow-white: drop-shadow(0 0 2px rgba(255, 255, 255, 0.95))
+    drop-shadow(0 0 5px rgba(255, 255, 255, 0.65))
+    drop-shadow(0 0 11px rgba(255, 255, 255, 0.35));
+  --icon-glow-gray: drop-shadow(0 0 2px rgba(160, 160, 160, 0.95))
+    drop-shadow(0 0 5px rgba(160, 160, 160, 0.65))
+    drop-shadow(0 0 11px rgba(160, 160, 160, 0.35));
+  --icon-glow-pink: drop-shadow(0 0 2px color-mix(in srgb, var(--custom-pink) 95%, transparent))
+    drop-shadow(0 0 5px color-mix(in srgb, var(--custom-pink) 65%, transparent))
+    drop-shadow(0 0 11px color-mix(in srgb, var(--custom-pink) 35%, transparent));
+
+  --text-glow-white: 0 0 2px rgba(255, 255, 255, 0.95),
+    0 0 5px rgba(255, 255, 255, 0.65),
+    0 0 11px rgba(255, 255, 255, 0.35);
+
+  --text-glow-pink: 0 0 2px color-mix(in srgb, var(--custom-pink) 95%, transparent),
+    0 0 5px color-mix(in srgb, var(--custom-pink) 65%, transparent),
+    0 0 11px color-mix(in srgb, var(--custom-pink) 35%, transparent);
+
+  --t: 0.16s ease;
+}
+
+/* -----------------------------------------------------------------------------
+   2. BASE
+   -------------------------------------------------------------------------- */
+body {
+  background-color: var(--custom-dark);
+}
+
+a,
+.btn-link {
+  color: #fff;
+  transition: color var(--t), text-shadow var(--t);
+}
+
+a:hover,
+.btn-link:hover {
+  color: #fff;
+  text-decoration: none;
+}
+
+a:hover:not(.nav-link):not(.btn) {
+  text-shadow: var(--text-glow-white);
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--custom-dark);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--custom-gray);
+  border-radius: 6px;
+  border: 2px solid var(--custom-dark);
+  transition: background var(--t);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--custom-pink);
+}
+
+/* -----------------------------------------------------------------------------
+   3. NAVBAR / MENU DU HAUT
+   -------------------------------------------------------------------------- */
+.bg-dark {
+  background-color: var(--custom-darker) !important;
+}
+
+.bg-dark .btn-primary {
+  box-shadow: none !important;
+}
+
+.top-nav .navbar-buttons .btn-primary:not(.minimal),
+.top-nav .navbar-buttons .btn-primary:not(.minimal):hover,
+.top-nav .navbar-buttons .btn-primary:not(.minimal):focus,
+.top-nav .navbar-buttons .btn-primary:not(.minimal):active {
+  background-color: var(--custom-gray) !important;
+  border-color: var(--custom-gray) !important;
+}
+
+.top-nav .navbar-buttons .btn-primary:not(.minimal):hover {
+  box-shadow: var(--gray-glow) !important;
+}
+
+body .top-nav .navbar-brand button::before {
+  content: "";
+  display: inline-block;
+  width: 17px;
+  height: 17px;
+  margin: 0 5px 0 0;
+  vertical-align: middle;
+  position: relative;
+  top: -3px;
+  background: url("/favicon.ico") center / contain no-repeat;
+}
+
+.brand-link:focus,
+.brand-link:active,
+.brand-link:hover {
+  background-color: transparent !important;
+}
+
+.btn.brand-link {
+  font-weight: 700;
+  color: #f5f8fa;
+}
+
+body .top-nav .navbar-brand button::after {
+  content: "hub";
+  display: inline-block;
+  background: var(--custom-pink);
+  color: #000;
+  font-weight: 700;
+  border-radius: 3px;
+  margin: 0 0 0 3px;
+  padding: 0 2px;
+  box-shadow: var(--pink-glow);
+}
+
+/* -----------------------------------------------------------------------------
+   4. CHAMPS & FORMULAIRES
+   -------------------------------------------------------------------------- */
+.clearable-text-field,
+.clearable-text-field:active,
+.clearable-text-field:focus {
+  background-color: var(--custom-darker);
+}
+
+.clearable-text-field {
+  border: 1px solid transparent;
+}
+
+.input-control,
+.bg-secondary,
+.text-input,
+.text-input:focus,
+.text-input[readonly],
+.text-input:disabled {
+  background-color: var(--custom-darker) !important;
+}
+
+.form-control:not(.card-check):focus,
+.input-control:focus,
+.text-input:focus,
+.clearable-text-field:focus {
+  border: 1px solid var(--custom-pink);
+  box-shadow: var(--pink-focus);
+  color: #f5f8fa;
+  transition: box-shadow var(--t), border-color var(--t);
+}
+
+input.bg-secondary.border-secondary.form-control,
+.input-group input.bg-secondary.border-secondary {
+  border: 1px solid transparent !important;
+}
+
+input.bg-secondary.border-secondary.form-control:focus,
+.input-group input.bg-secondary.border-secondary:focus {
+  border: 1px solid var(--custom-pink) !important;
+  box-shadow: var(--pink-focus) !important;
+}
+
+input.search-input.btn-secondary,
+input.search-input.btn-secondary:hover {
+  background-color: var(--custom-darker) !important;
+  border: 1px solid transparent !important;
+  box-shadow: none !important;
+  color: #f5f8fa;
+}
+
+input.search-input.btn-secondary:focus {
+  border: 1px solid var(--custom-pink) !important;
+  box-shadow: var(--pink-focus) !important;
+}
+
+input.btn-secondary.form-control,
+input.btn-secondary.form-control:hover {
+  background-color: var(--custom-darker) !important;
+  border: 1px solid transparent !important;
+  box-shadow: none !important;
+  color: #f5f8fa;
+}
+
+input.btn-secondary.form-control:focus {
+  border: 1px solid var(--custom-pink) !important;
+  box-shadow: var(--pink-focus) !important;
+}
+
+.filter-item-header:focus,
+.filter-item-header.focus {
+  outline: none;
+  border-color: var(--custom-pink) !important;
+  box-shadow: none !important;
+}
+
+div.react-select__control,
+div.react-select__control:hover {
+  background-color: var(--custom-darker);
+  border-color: transparent;
+}
+
+.react-select__control--is-focused {
+  border-color: var(--custom-pink) !important;
+  box-shadow: var(--pink-focus) !important;
+}
+
+div.react-select__menu {
+  background-color: var(--custom-darker);
+}
+
+.react-select__option--is-selected:not(.react-select__option--is-focused) {
+  background-color: var(--custom-dark) !important;
+}
+
+.react-select__multi-value__remove {
+  transition: filter var(--t), color var(--t);
+}
+
+.react-select__multi-value__remove:hover {
+  background-color: transparent !important;
+  color: #db3737 !important;
+}
+
+.react-select__multi-value__remove:hover svg {
+  filter: var(--icon-glow-red);
+}
+
+.date-input-group .input-group-append,
+.bulk-update-date-input .input-group-append {
+  margin-left: 5px;
+}
+
+.date-input-group .date-input:focus,
+.bulk-update-date-input .date-input:focus {
+  position: relative;
+  z-index: 3;
+}
+
+/* -----------------------------------------------------------------------------
+   5. BOUTONS
+   -------------------------------------------------------------------------- */
+.btn {
+  transition: background-color var(--t), border-color var(--t), box-shadow var(--t),
+    color var(--t);
+}
+
+.btn:disabled,
+.btn:disabled:hover {
+  cursor: not-allowed;
+  opacity: 0.25;
+  box-shadow: none !important;
+}
+
+.btn:focus:not(:hover),
+.btn.focus:not(:hover),
+.btn:not(:disabled):not(.disabled):active,
+.btn:not(:disabled):not(.disabled):active:focus {
+  box-shadow: none !important;
+  outline: none;
+}
+
+.btn-primary:not(.minimal) {
+  background-color: var(--custom-pink);
+  border-color: var(--custom-pink);
+}
+
+.btn-primary:not(.minimal):hover {
+  background-color: var(--custom-pink);
+  border-color: var(--custom-pink);
+  box-shadow: var(--pink-glow);
+}
+
+.btn-primary.disabled,
+.btn-primary:disabled {
+  background-color: var(--custom-pink);
+  border-color: var(--custom-pink);
+}
+
+.btn-primary:not(.minimal):not(:disabled):not(.disabled):not(.brand-link):hover,
+.btn-primary:not(:disabled):not(.disabled):not(.brand-link):active,
+.btn-primary:not(:disabled):not(.disabled):not(.brand-link).active,
+.show > .btn-primary.dropdown-toggle {
+  background-color: var(--custom-pink);
+  border-color: var(--custom-pink);
+}
+
+.btn-primary.minimal:not(:disabled):not(.disabled):not(.brand-link):hover:not(.active):not(:active) {
+  color: var(--custom-pink);
+  background-color: transparent;
+}
+
+.btn-primary:not(:disabled):not(.disabled):not(.brand-link):focus:not(:hover),
+.btn-primary:not(:disabled):not(.disabled):not(.brand-link).focus:not(:hover) {
+  background-color: var(--custom-pink);
+  border-color: var(--custom-pink);
+  box-shadow: none;
+}
+
+.top-nav .btn.minimal:not(.brand-link) {
+  border-bottom: 2px solid transparent !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+  transition: color var(--t), border-color var(--t), background-color var(--t);
+}
+
+.top-nav .btn.minimal:not(.brand-link):hover {
+  color: #f5f8fa !important;
+  border-bottom-color: var(--custom-pink) !important;
+}
+
+.top-nav .btn.minimal.active:not(.brand-link),
+.top-nav .nav-utility.active .btn.minimal {
+  color: var(--custom-pink) !important;
+  border-bottom-color: var(--custom-pink) !important;
+}
+
+@property --gh {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 0px;
+}
+
+.top-nav .btn.minimal:has(svg.fa-spin),
+.top-nav .btn.minimal:has(svg.fa-spin):hover {
+  color: var(--custom-pink) !important;
+  animation: gear-heartbeat 1.5s ease-in-out infinite;
+}
+
+.top-nav .btn.minimal:has(svg.fa-spin) svg {
+  filter: drop-shadow(0 0 2px color-mix(in srgb, var(--custom-pink) 92%, transparent))
+    drop-shadow(0 0 var(--gh) color-mix(in srgb, var(--custom-pink) 60%, transparent));
+}
+
+@keyframes gear-heartbeat {
+  0%, 45%, 100% { --gh: 2px; }
+  9%            { --gh: 7px; }
+  18%           { --gh: 2px; }
+  27%           { --gh: 7px; }
+}
+
+.job-table .job:has(svg.fa-spin) .job-description {
+  animation: gear-heartbeat 1.5s ease-in-out infinite;
+}
+
+.job-table .job:has(svg.fa-spin) svg.fa-spin {
+  color: var(--custom-pink);
+  filter: drop-shadow(0 0 2px color-mix(in srgb, var(--custom-pink) 92%, transparent))
+    drop-shadow(0 0 var(--gh) color-mix(in srgb, var(--custom-pink) 60%, transparent));
+}
+
+.card-popovers .btn {
+  background-color: transparent !important;
+  box-shadow: none !important;
+  transition: color var(--t), text-shadow var(--t);
+}
+
+.card-popovers .btn:hover {
+  color: #f5f8fa !important;
+  text-shadow: var(--text-glow-white);
+}
+
+.card-popovers .btn svg {
+  transition: filter var(--t);
+}
+
+.card-popovers .btn:hover svg {
+  filter: var(--icon-glow-white);
+}
+
+.card-popovers .btn.active {
+  color: #f5f8fa !important;
+}
+
+.count-button .btn,
+.o-counter .btn,
+.organized-button,
+#operation-menu,
+.history-operations-dropdown .dropdown-toggle,
+[id^="stash-menu-"] {
+  color: #f5f8fa !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+  transition: color var(--t), text-shadow var(--t), background-color var(--t);
+}
+
+.count-button .btn svg,
+.o-counter .btn svg,
+.organized-button svg,
+#operation-menu svg,
+.history-operations-dropdown .dropdown-toggle svg,
+[id^="stash-menu-"] svg {
+  transition: filter var(--t);
+}
+
+.count-button,
+.count-button:hover,
+.o-counter,
+.o-counter:hover {
+  background-color: transparent !important;
+}
+
+.count-button:hover .btn,
+.o-counter:hover .btn,
+.organized-button:hover,
+#operation-menu:hover,
+.history-operations-dropdown .dropdown-toggle:hover,
+[id^="stash-menu-"]:hover {
+  text-shadow: var(--text-glow-white);
+}
+
+.count-button:hover .btn svg,
+.o-counter:hover .btn svg,
+.organized-button:hover svg,
+#operation-menu:hover svg,
+.history-operations-dropdown .dropdown-toggle:hover svg,
+[id^="stash-menu-"]:hover svg {
+  filter: var(--icon-glow-white);
+}
+
+.organized-button.organized {
+  color: var(--custom-pink) !important;
+}
+
+.organized-button.organized:hover {
+  text-shadow: var(--text-glow-pink);
+}
+
+.organized-button.organized:hover svg {
+  filter: var(--icon-glow-pink);
+}
+
+.btn-secondary:not(.minimal) {
+  background-color: var(--custom-gray);
+  border-color: var(--custom-gray);
+}
+
+.btn-secondary:not(.minimal):hover {
+  background-color: var(--custom-gray);
+  border-color: var(--custom-gray);
+  box-shadow: var(--gray-glow);
+}
+
+.btn-secondary:not(.minimal):not(:disabled):not(.disabled):active,
+.btn-secondary:not(.minimal):not(:disabled):not(.disabled).active,
+.show > .btn-secondary.dropdown-toggle {
+  background-color: var(--custom-gray);
+  border-color: var(--custom-gray);
+}
+
+.btn-danger:hover {
+  box-shadow: var(--danger-glow);
+  opacity: 1;
+}
+
+.btn-success:hover {
+  box-shadow: var(--success-glow);
+  opacity: 1;
+}
+
+.button-group-above .btn {
+  color: #f5f8fa !important;
+  background-color: transparent !important;
+  border-color: transparent !important;
+  border-bottom: 2px solid transparent !important;
+  box-shadow: none !important;
+  transition: color var(--t), border-color var(--t);
+}
+
+.button-group-above .btn:not(:disabled):not(.disabled):hover {
+  color: #f5f8fa !important;
+  border-bottom-color: var(--custom-pink) !important;
+}
+
+.button-group-above .btn.active {
+  color: var(--custom-pink) !important;
+  border-bottom-color: var(--custom-pink) !important;
+}
+
+.modifier-option.btn {
+  background-color: var(--custom-gray) !important;
+  color: #f5f8fa !important;
+  border-bottom: 2px solid transparent !important;
+  box-shadow: none !important;
+}
+
+.modifier-option.btn:hover {
+  color: #f5f8fa !important;
+  border-bottom-color: var(--custom-pink) !important;
+}
+
+.modifier-option.btn.selected {
+  color: var(--custom-pink) !important;
+  border-bottom-color: var(--custom-pink) !important;
+}
+
+.scraper-menu .dropdown-toggle,
+.scraper-menu .dropdown-toggle:hover,
+.scraper-menu .dropdown-toggle:focus,
+.scraper-menu .dropdown-toggle:active,
+.scraper-menu.show > .dropdown-toggle,
+.scraper-menu .reload-button,
+.scraper-menu .reload-button:hover,
+.scraper-menu .reload-button:focus,
+.scraper-menu .reload-button:active {
+  background-color: var(--custom-gray) !important;
+  border-color: var(--custom-gray) !important;
+}
+
+.scraper-menu .dropdown-toggle:hover,
+.scraper-menu .reload-button:hover {
+  box-shadow: var(--gray-glow) !important;
+}
+
+.scraper-menu .dropdown-menu .scraper-filter-container {
+  background-color: var(--custom-darker);
+  border-bottom-color: var(--custom-dark);
+}
+
+.custom-fields .collapse-button,
+.custom-fields .collapse-button:hover,
+.custom-fields .collapse-button:focus,
+.custom-fields .collapse-button:active,
+.custom-fields .collapse-button.active,
+.custom-fields-input .collapse-button,
+.custom-fields-input .collapse-button:hover,
+.custom-fields-input .collapse-button:focus,
+.custom-fields-input .collapse-button:active,
+.custom-fields-input .collapse-button.active {
+  color: #f5f8fa !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
+
+.custom-fields .collapse-button:hover,
+.custom-fields-input .collapse-button:hover {
+  text-shadow: var(--text-glow-white);
+}
+
+.custom-fields .collapse-button:hover svg,
+.custom-fields-input .collapse-button:hover svg {
+  filter: var(--icon-glow-white);
+}
+
+/* -----------------------------------------------------------------------------
+   6. CARTES (scènes, galeries, etc.)
+   -------------------------------------------------------------------------- */
+.card {
+  background-color: var(--custom-darker);
+}
+
+.card hr {
+  border-color: var(--custom-pink);
+  box-shadow: var(--pink-underline-glow);
+  width: 90%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.scene-card,
+.image-card,
+.gallery-card,
+.performer-card,
+.studio-card,
+.group-card,
+.tag-card,
+.scene-marker-card {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.scene-card:hover,
+.image-card:hover,
+.gallery-card:hover,
+.performer-card:hover,
+.studio-card:hover,
+.group-card:hover,
+.tag-card:hover,
+.scene-marker-card:hover {
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.55);
+  transform: translateY(-3px);
+}
+
+.scene-galleries .gallery-card:hover,
+.gallery-scenes .scene-card:hover {
+  transform: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.scene-performers .performer-card:hover,
+.gallery-performers .performer-card:hover,
+.image-performers .performer-card:hover {
+  transform: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.scene-performers,
+.image-performers,
+.gallery-performers {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  justify-items: center;
+}
+
+.scene-performers .performer-card,
+.image-performers .performer-card,
+.gallery-performers .performer-card {
+  width: 100% !important;
+  max-width: 15rem !important;
+  min-width: 0 !important;
+}
+
+.scene-performers .performer-card-image,
+.image-performers .performer-card-image,
+.gallery-performers .performer-card-image {
+  min-width: 0 !important;
+}
+
+/* -----------------------------------------------------------------------------
+   7. ONGLETS & MENUS LATÉRAUX
+   -------------------------------------------------------------------------- */
+.nav-tabs .nav-link {
+  border-bottom: 2px solid transparent;
+  transition: color var(--t), border-color var(--t);
+}
+
+.nav-tabs .nav-link.active {
+  color: var(--custom-pink);
+  background-color: transparent;
+}
+
+.nav-tabs .nav-link:hover {
+  border-bottom: 2px solid var(--custom-pink);
+}
+
+.nav-tabs .nav-link.active:hover {
+  border-bottom-color: var(--custom-pink);
+}
+
+.nav-pills .nav-link {
+  border-bottom: 2px solid transparent;
+  transition: color var(--t), border-color var(--t), background-color var(--t);
+}
+
+.nav-pills .nav-link:hover {
+  color: #f5f8fa;
+  border-bottom-color: var(--custom-pink);
+}
+
+.nav-pills .nav-link.active,
+.nav-pills .show > .nav-link {
+  color: var(--custom-pink);
+  border-bottom-color: var(--custom-pink);
+  background-color: transparent;
+}
+
+/* -----------------------------------------------------------------------------
+   7 bis. HALO DE LA BARRE DE SOULIGNEMENT AU SURVOL
+   -----------------------------------------------------------------------------*/
+.top-nav .btn.minimal:not(.brand-link):hover,
+.modifier-option.btn:hover,
+.button-group-above .btn:hover,
+.sidebar .collapse-button:hover,
+.nav-tabs .nav-link:hover,
+.nav-pills .nav-link:hover {
+  position: relative;
+}
+
+.top-nav .btn.minimal:not(.brand-link):hover::before,
+.modifier-option.btn:hover::before,
+.button-group-above .btn:hover::before,
+.sidebar .collapse-button:hover::before,
+.nav-tabs .nav-link:hover::before,
+.nav-pills .nav-link:hover::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px; /* calé sur le soulignement (bord bas) */
+  height: 1px;
+  box-shadow: var(--pink-underline-glow);
+  pointer-events: none; /* n'intercepte pas les clics */
+}
+
+/* -----------------------------------------------------------------------------
+   8. TOOLBARS, PAGINATION, DROPDOWNS, POPOVERS, BANDEAUX
+   -------------------------------------------------------------------------- */
+.filtered-list-toolbar,
+.filtered-list-toolbar .btn-secondary,
+.pagination .btn-secondary {
+  background-color: var(--custom-dark) !important;
+  border-color: var(--custom-darker) !important;
+  box-shadow: none !important;
+}
+
+.filtered-list-toolbar .selected-items-info {
+  border-color: var(--custom-darker);
+}
+
+.filtered-list-toolbar .btn svg {
+  transition: filter var(--t);
+}
+
+.filtered-list-toolbar .btn:not(.btn-danger):hover svg {
+  filter: var(--icon-glow-white);
+}
+
+.pagination > .btn:first-child,
+.pagination > .btn:nth-child(2),
+.pagination > .btn:nth-last-child(2),
+.pagination > .btn:last-child {
+  transition: text-shadow var(--t), color var(--t), background-color var(--t),
+    border-color var(--t), box-shadow var(--t);
+}
+
+.pagination > .btn:first-child:not(:disabled):hover,
+.pagination > .btn:nth-child(2):not(:disabled):hover,
+.pagination > .btn:nth-last-child(2):not(:disabled):hover,
+.pagination > .btn:last-child:not(:disabled):hover {
+  text-shadow: var(--text-glow-white);
+}
+
+.page-count-dropdown svg {
+  transition: filter var(--t);
+}
+
+.page-count-dropdown:hover svg {
+  filter: var(--icon-glow-white);
+}
+
+.pagination .btn:first-child {
+  border-left: 1px solid var(--custom-darker);
+}
+.pagination .btn:last-child {
+  border-right: 1px solid var(--custom-darker);
+}
+
+#select_page_popover .btn-primary,
+#select_page_popover .btn-primary:hover,
+#select_page_popover .btn-primary:focus,
+#select_page_popover .btn-primary:active,
+#custom_pagesize_popover .btn-primary,
+#custom_pagesize_popover .btn-primary:hover,
+#custom_pagesize_popover .btn-primary:focus,
+#custom_pagesize_popover .btn-primary:active {
+  background-color: var(--custom-gray) !important;
+  border-color: var(--custom-gray) !important;
+}
+
+#select_page_popover .btn-primary:hover,
+#custom_pagesize_popover .btn-primary:hover {
+  box-shadow: var(--gray-glow) !important;
+}
+
+.pagination .btn-secondary.active,
+.pagination .btn-secondary.active:hover,
+.pagination .btn-secondary.active:focus,
+.pagination .btn-secondary.active:active {
+  background-color: var(--custom-darker) !important;
+  border-color: var(--custom-darker) !important;
+  box-shadow: none !important;
+}
+
+div.dropdown-menu {
+  background-color: var(--custom-dark);
+}
+
+.dropdown-item.active,
+.dropdown-item:active {
+  background-color: var(--custom-gray);
+}
+
+.dropdown:has(.page-count-dropdown) .dropdown-menu {
+  background-color: var(--custom-darker);
+}
+
+.dropdown:has(.page-count-dropdown) .dropdown-item.active,
+.dropdown:has(.page-count-dropdown) .dropdown-item:active,
+.dropdown:has(.page-count-dropdown) .dropdown-item:hover,
+.dropdown:has(.page-count-dropdown) .dropdown-item:focus {
+  background-color: var(--custom-dark);
+}
+
+#performer-scraper-popover .dropdown-item,
+#set-image-popover .btn {
+  color: #f5f8fa !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+  transition: color var(--t), background-color var(--t);
+}
+
+#performer-scraper-popover .dropdown-item:hover,
+#performer-scraper-popover .dropdown-item:focus,
+#set-image-popover .btn:hover,
+#set-image-popover .btn:focus {
+  color: #f5f8fa !important;
+  background-color: rgba(138, 155, 168, 0.15) !important;
+}
+
+#set-image-popover .popover-body {
+  padding: 0.25rem 0;
+}
+
+#set-image-popover .image-input {
+  display: block;
+  width: 100%;
+}
+
+#set-image-popover .btn {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: 100%;
+  padding: 0.375rem 0.75rem;
+  border-color: transparent;
+}
+
+.dropdown-item.bg-secondary:hover,
+.dropdown-item.bg-secondary:focus {
+  background-color: rgba(138, 155, 168, 0.15) !important;
+}
+
+.popover {
+  background-color: var(--custom-dark);
+  border-color: var(--custom-darker);
+}
+
+.popover-header {
+  background-color: var(--custom-darker);
+  border-bottom-color: var(--custom-darker);
+  color: #f5f8fa;
+}
+
+.bs-popover-top > .arrow::after,
+.bs-popover-auto[x-placement^="top"] > .arrow::after {
+  border-top-color: var(--custom-dark);
+}
+.bs-popover-top > .arrow::before,
+.bs-popover-auto[x-placement^="top"] > .arrow::before {
+  border-top-color: var(--custom-darker);
+}
+
+.bs-popover-bottom > .arrow::after,
+.bs-popover-auto[x-placement^="bottom"] > .arrow::after {
+  border-bottom-color: var(--custom-dark);
+}
+.bs-popover-bottom > .arrow::before,
+.bs-popover-auto[x-placement^="bottom"] > .arrow::before {
+  border-bottom-color: var(--custom-darker);
+}
+
+.bs-popover-left > .arrow::after,
+.bs-popover-auto[x-placement^="left"] > .arrow::after {
+  border-left-color: var(--custom-dark);
+}
+.bs-popover-left > .arrow::before,
+.bs-popover-auto[x-placement^="left"] > .arrow::before {
+  border-left-color: var(--custom-darker);
+}
+
+.bs-popover-right > .arrow::after,
+.bs-popover-auto[x-placement^="right"] > .arrow::after {
+  border-right-color: var(--custom-dark);
+}
+.bs-popover-right > .arrow::before,
+.bs-popover-auto[x-placement^="right"] > .arrow::before {
+  border-right-color: var(--custom-darker);
+}
+
+#queue-viewer .queue-controls,
+#scene-edit-details .edit-buttons-container {
+  background-color: var(--custom-dark);
+}
+
+#queue-viewer .queue-controls .btn,
+#queue-viewer .queue-controls .btn:hover,
+#queue-viewer .queue-controls .btn:focus,
+#queue-viewer .queue-controls .btn:active {
+  color: #f5f8fa !important;
+  background-color: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+#queue-viewer .queue-controls .btn svg {
+  transition: filter var(--t);
+}
+
+#queue-viewer .queue-controls .btn:hover svg {
+  filter: var(--icon-glow-white);
+}
+
+#queue-viewer .current {
+  background-color: var(--custom-darker);
+}
+
+/* -----------------------------------------------------------------------------
+   8 bis. CALENDRIER (react-datepicker) — ex. filtres de date dans Edit Filter
+   -----------------------------------------------------------------------------*/
+div.react-datepicker {
+  background-color: var(--custom-dark) !important;
+  border-color: var(--custom-darker) !important;
+  color: #f5f8fa !important;
+}
+
+div.react-datepicker .react-datepicker__header,
+div.react-datepicker .react-datepicker-time__header {
+  background-color: var(--custom-darker) !important;
+  border-bottom-color: var(--custom-darker) !important;
+  color: #f5f8fa !important;
+}
+
+div.react-datepicker .react-datepicker__day-name,
+div.react-datepicker .react-datepicker__day {
+  color: #f5f8fa !important;
+}
+
+div.react-datepicker .react-datepicker__day--disabled,
+div.react-datepicker .react-datepicker__day--outside-month {
+  color: color-mix(in srgb, #f5f8fa 40%, transparent) !important;
+}
+
+div.react-datepicker .react-datepicker__day:hover {
+  background-color: transparent !important;
+  border-radius: 0 !important;
+  box-shadow: inset 0 -2px 0 0 var(--custom-pink) !important;
+  color: #f5f8fa !important;
+}
+
+div.react-datepicker .react-datepicker__day--selected,
+div.react-datepicker .react-datepicker__day--keyboard-selected {
+  background-color: transparent !important;
+  border-radius: 0 !important;
+  box-shadow: inset 0 -2px 0 0 var(--custom-pink) !important;
+  color: var(--custom-pink) !important;
+}
+
+div.react-datepicker .react-datepicker__month-dropdown,
+div.react-datepicker .react-datepicker__year-dropdown {
+  background-color: var(--custom-darker) !important;
+  border-color: var(--custom-dark) !important;
+}
+
+div.react-datepicker .react-datepicker__month-option:hover,
+div.react-datepicker .react-datepicker__year-option:hover {
+  background-color: rgba(138, 155, 168, 0.15) !important;
+}
+
+div.react-datepicker div.react-datepicker__time-container div.react-datepicker__time {
+  background-color: var(--custom-dark) !important;
+  color: #f5f8fa !important;
+}
+
+div.react-datepicker .react-datepicker__time-list-item:hover {
+  background-color: rgba(138, 155, 168, 0.15) !important;
+}
+
+div.react-datepicker .react-datepicker__time-list-item--selected {
+  background-color: transparent !important;
+  color: var(--custom-pink) !important;
+  box-shadow: inset 0 -2px 0 0 var(--custom-pink) !important;
+}
+
+div.react-datepicker .react-datepicker__navigation-icon::before {
+  border-color: #8a9ba8 !important;
+}
+
+div.react-datepicker
+  .react-datepicker__navigation:hover
+  .react-datepicker__navigation-icon::before {
+  border-color: var(--custom-pink) !important;
+}
+
+/* -----------------------------------------------------------------------------
+   9. SIDEBAR
+   -------------------------------------------------------------------------- */
+.sidebar-pane .sidebar {
+  background-color: var(--custom-dark);
+  border-right: 1px solid var(--custom-darker);
+}
+
+.sidebar-section {
+  border-bottom: 1px solid var(--custom-darker);
+}
+
+.sidebar .collapse-button {
+  color: #f5f8fa !important;
+  background-color: transparent !important;
+  border-bottom: 2px solid transparent !important;
+  box-shadow: none !important;
+  transition: color var(--t), border-color var(--t);
+}
+
+.sidebar .collapse-button:hover {
+  color: #f5f8fa !important;
+  border-bottom-color: var(--custom-pink) !important;
+}
+
+.sidebar .collapse-button:active,
+.sidebar .collapse-button:focus,
+.sidebar .collapse-button.active {
+  color: var(--custom-pink) !important;
+  border-bottom-color: var(--custom-pink) !important;
+}
+
+/* -----------------------------------------------------------------------------
+   10. MODALS
+   -------------------------------------------------------------------------- */
+.modal-header,
+.modal-body,
+.modal-footer {
+  background-color: var(--custom-dark);
+}
+
+.search-item,
+.PerformerTagger-performer,
+.StudioTagger-studio,
+.TagTagger-tag,
+.StudioTagger-studio .studio-card img,
+.TagTagger-tag .tag-card img {
+  background-color: var(--custom-darker);
+}
+
+.StudioTagger .studio-card,
+.StudioTagger .studio-card:hover,
+.TagTagger .tag-card,
+.TagTagger .tag-card:hover,
+.PerformerTagger .performer-card,
+.PerformerTagger .performer-card:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+.StudioTagger-box-link .input-group-text,
+.StudioTagger-box-link .input-group-text a,
+.PerformerTagger-box-link .input-group-text,
+.PerformerTagger-box-link .input-group-text a {
+  color: #000;
+}
+
+/* -----------------------------------------------------------------------------
+   11. CONTRÔLES (switches, sliders)
+   -------------------------------------------------------------------------- */
+.custom-control-input:focus ~ .custom-control-label::before,
+.custom-control-input:active ~ .custom-control-label::before,
+.custom-control-input:checked ~ .custom-control-label::before {
+  border: 1px solid var(--custom-dark) !important;
+  box-shadow: none !important;
+}
+
+.custom-control-input:checked ~ .custom-control-label::before,
+.custom-control-input:active:checked ~ .custom-control-label::before {
+  background-color: color-mix(in srgb, var(--custom-pink) 22%, var(--custom-darker)) !important;
+}
+.custom-control-input:active:not(:checked) ~ .custom-control-label::before {
+  background-color: #fff !important;
+}
+
+.custom-switch .custom-control-input:checked ~ .custom-control-label::after {
+  background-color: var(--custom-pink);
+}
+
+.custom-switch .custom-control-label::after {
+  background-color: var(--custom-gray);
+}
+
+.custom-switch .custom-control-label::before {
+  transition: background-color var(--t), border-color var(--t);
+}
+
+.custom-switch .custom-control-label::after {
+  transition: background-color var(--t), box-shadow var(--t), transform var(--t);
+}
+
+.custom-switch:hover .custom-control-input:not(:checked) ~ .custom-control-label::after {
+  box-shadow: var(--gray-glow);
+}
+
+.custom-switch:hover .custom-control-input:checked ~ .custom-control-label::after {
+  box-shadow: var(--pink-glow);
+}
+
+.form-check-input,
+input[type="radio"],
+input[type="checkbox"] {
+  accent-color: var(--custom-pink);
+}
+
+.zoom-slider::-webkit-slider-runnable-track {
+  background: color-mix(in srgb, var(--custom-pink) 22%, var(--custom-darker)) !important;
+}
+.zoom-slider::-moz-range-track {
+  background: color-mix(in srgb, var(--custom-pink) 22%, var(--custom-darker)) !important;
+}
+
+.zoom-slider::-webkit-slider-thumb {
+  background: var(--custom-pink) !important;
+  transition: box-shadow var(--t);
+}
+.zoom-slider::-moz-range-thumb {
+  background: var(--custom-pink) !important;
+  transition: box-shadow var(--t);
+}
+
+.zoom-slider:hover::-webkit-slider-thumb {
+  box-shadow: var(--pink-glow) !important;
+}
+.zoom-slider:hover::-moz-range-thumb {
+  box-shadow: var(--pink-glow) !important;
+}
+
+/* -----------------------------------------------------------------------------
+   12. TAGS, BADGES, PROGRESSION, FAVORI
+   -------------------------------------------------------------------------- */
+.tag-item {
+  background-color: var(--custom-darker);
+  color: #fff;
+}
+
+.filter-tags .tag-item .btn-secondary,
+.filter-tags .tag-item .btn-secondary:hover,
+.filter-tags .tag-item .btn-secondary:focus,
+.filter-tags .tag-item .btn-secondary:active {
+  background-color: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  color: #db3737 !important;
+}
+
+.filter-tags .tag-item .btn-secondary svg {
+  transition: filter var(--t);
+}
+
+.filter-tags .tag-item .btn-secondary:hover svg {
+  filter: var(--icon-glow-red);
+}
+
+.progress-bar {
+  background-color: var(--custom-dark);
+}
+
+.LoadingIndicator,
+.LoadingIndicator .spinner-border,
+.LoadingIndicator .LoadingIndicator-message {
+  color: var(--custom-darker);
+}
+
+.slick-dots li button:hover::before {
+  color: var(--custom-pink);
+  opacity: 1;
+  text-shadow: var(--text-glow-pink);
+}
+
+.slick-dots li.slick-active button::before {
+  color: var(--custom-pink);
+}
+
+.recommendations-container-edit .recommendation-row {
+  background-color: var(--custom-darker);
+}
+
+.badge-info {
+  background-color: var(--custom-darker);
+  color: var(--custom-pink);
+}
+
+.stash-id-pill span {
+  background-color: var(--custom-gray);
+}
+
+.stash-id-pill a {
+  background-color: var(--custom-darker);
+}
+
+button.btn.favorite-button {
+  transition: none;
+}
+
+button.btn.favorite-button.favorite,
+button.btn.favorite-button.favorite:active,
+button.btn.favorite-button.not-favorite:active {
+  color: var(--custom-pink) !important;
+}
+
+button.btn.favorite-button:hover,
+button.btn.favorite-button:focus,
+button.btn.favorite-button:active,
+button.btn.favorite-button.not-favorite {
+  background: transparent !important;
+  box-shadow: none !important;
+  outline: none;
+}
+
+button.btn.favorite-button:hover svg {
+  filter: var(--icon-glow-pink);
+}
+
+.remove-date-button,
+.add-date-button {
+  transition: color var(--t);
+}
+
+.remove-date-button svg,
+.add-date-button svg {
+  transition: filter var(--t);
+}
+
+.remove-date-button:hover {
+  color: #db3737 !important;
+}
+.remove-date-button:hover svg {
+  filter: var(--icon-glow-red);
+}
+
+.add-date-button:hover {
+  color: #0f9960 !important;
+}
+.add-date-button:hover svg {
+  filter: var(--icon-glow-green);
+}
+
+button.stop {
+  transition: color var(--t);
+}
+
+button.stop svg {
+  transition: filter var(--t);
+}
+
+button.stop:hover {
+  color: #db3737 !important;
+}
+button.stop:hover svg {
+  filter: var(--icon-glow-red);
+}
+
+.include-button,
+.exclude-icon {
+  transition: filter var(--t), color var(--t);
+}
+
+.exclude-button,
+.exclude-button:hover,
+.exclude-button:focus,
+.exclude-button:active,
+.exclude-button.active,
+.exclude-button:focus:not(:hover) {
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
+
+.selected-object:hover .include-button,
+.unselected-object:hover .include-button {
+  color: #0f9960 !important;
+  filter: var(--icon-glow-green);
+}
+
+.excluded-object:hover .exclude-icon,
+.exclude-button:hover .exclude-icon {
+  color: #db3737 !important;
+  filter: var(--icon-glow-red);
+}
+
+.save-button,
+.save-button:hover,
+.delete-button,
+.delete-button:hover {
+  box-shadow: none !important;
+}
+
+.save-button svg,
+.delete-button svg {
+  transition: filter var(--t), color var(--t);
+}
+
+.save-button:hover svg {
+  color: #f5f8fa;
+  filter: var(--icon-glow-white);
+}
+
+.delete-button:hover svg {
+  color: #db3737;
+  filter: var(--icon-glow-red);
+}
+
+.btn-danger-minimal,
+.btn-danger-minimal:hover,
+.btn-danger-minimal:focus,
+.btn-danger-minimal:active {
+  background-color: transparent !important;
+  border-color: var(--custom-darker) !important;
+  color: #db3737 !important;
+}
+
+.pin-criterion-button svg {
+  transition: filter var(--t), transform var(--t);
+}
+
+.pin-criterion-button:hover svg {
+  filter: var(--icon-glow-white);
+}
+
+.remove-criterion-button svg {
+  transition: filter var(--t);
+}
+
+.remove-criterion-button:hover svg {
+  filter: var(--icon-glow-red);
+}
+
+.setting-group-collapse-button,
+.setting-group-collapse-button:hover,
+.setting-group-collapse-button:focus,
+.setting-group-collapse-button:active {
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+.setting-group-collapse-button svg {
+  transition: filter var(--t);
+}
+
+.setting-group-collapse-button:hover svg {
+  filter: var(--icon-glow-gray);
+}
+
+.expand-collapse,
+.expand-collapse:hover,
+.expand-collapse:focus,
+.expand-collapse:active {
+  color: #f5f8fa !important;
+  background-color: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+.expand-collapse svg {
+  transition: filter var(--t);
+}
+
+.expand-collapse:hover svg {
+  filter: var(--icon-glow-gray);
+}
+
+a[href*="/help/"],
+a[href*="/help/"]:hover,
+.help-button,
+.help-button:hover {
+  color: #f5f8fa !important;
+}
+
+a[href*="/help/"] svg,
+.help-button svg {
+  transition: filter var(--t);
+}
+
+a[href*="/help/"]:hover svg,
+.help-button:hover svg {
+  filter: var(--icon-glow-white);
+}
+
+.tagger-container .collapse-button,
+.tagger-container .collapse-button:hover,
+.tagger-container .collapse-button:focus,
+.tagger-container .collapse-button:active {
+  color: #f5f8fa !important;
+  background-color: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+.tagger-container .collapse-button svg {
+  transition: filter var(--t);
+}
+
+.tagger-container .collapse-button:hover svg {
+  filter: var(--icon-glow-white);
+}
+
+.btn.link,
+.btn.link:hover,
+.btn.link:focus,
+.btn.link:active {
+  color: #f5f8fa !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
+
+.btn.link svg {
+  transition: filter var(--t);
+}
+
+.btn.link:hover svg {
+  filter: var(--icon-glow-white);
+}
+
+/* -----------------------------------------------------------------------------
+   13. CORRECTIFS DIVERS
+   -------------------------------------------------------------------------- */
+.scene-tabs .tab-content {
+  padding-top: 12px;
+  padding-left: 12px;
+}
+
+#scene-edit-details .edit-buttons-container {
+  margin-left: 0;
+  margin-right: 0;
+}
+
+.scene-tabs .btn-primary,
+.scene-tabs .btn-secondary,
+.scene-tabs .btn-danger,
+.scene-tabs .btn-success {
+  position: relative;
+  z-index: 1;
+}
+
+.scene-divider button,
+.scene-divider button:hover,
+.gallery-divider button,
+.gallery-divider button:hover,
+.scrubber-wrapper button,
+.scrubber-wrapper button:hover {
+  background-color: var(--custom-darker) !important;
+  box-shadow: none !important;
+  border-color: var(--custom-dark) !important;
+  color: #f5f8fa !important;
+}
+
+.scene-divider button svg,
+.gallery-divider button svg,
+.scrubber-wrapper button svg {
+  transition: filter var(--t);
+}
+
+.scene-divider button:hover svg,
+.gallery-divider button:hover svg,
+.scrubber-wrapper button:hover svg {
+  filter: var(--icon-glow-white);
+}
+
+.scene-subheader .resolution {
+  margin-right: 0.5rem;
+}
+
+.preview-button button {
+  background-color: transparent !important;
+}
+
+.details-edit > div {
+  margin-right: 0.5rem;
+}
+
+/* Task queue (à part) dans les options */
+#tasks-panel .tasks-panel-queue {
+  background-color: transparent;
+}
+
+.job-table.card {
+  background-color: var(--custom-darker);
+}
+
+.table-list table thead {
+  background-color: var(--custom-darker);
+}
+
+.table-list tbody tr:hover {
+  background-color: rgba(138, 155, 168, 0.15);
+}
+
+.markdown code,
+.markdown blockquote,
+.markdown pre {
+  background-color: var(--custom-dark);
+}
+
+.rating-stars .set,
+.rating-stars .setting,
+.rating-stars .unsetting {
+  color: var(--custom-pink);
+}
+
+.rating-stars .btn,
+.rating-stars .btn:hover,
+.rating-stars .btn:focus,
+.rating-stars .btn:active {
+  background-color: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+.rating-stars .btn svg {
+  transition: filter var(--t);
+}
+
+.rating-stars .btn:hover svg {
+  filter: var(--icon-glow-pink);
+}
+
+.rating-number > .fa-icon {
+  color: var(--custom-pink);
+  transition: filter var(--t);
+}
+
+.rating-number:hover > .fa-icon {
+  filter: var(--icon-glow-pink);
+}
+
+.rating-number .edit-rating-button .fa-icon {
+  color: #f5f8fa !important;
+  transition: filter var(--t);
+}
+
+.rating-number .edit-rating-button:hover .fa-icon {
+  filter: var(--icon-glow-white);
+}
+
+.rating-banner {
+  background-color: color-mix(in srgb, var(--custom-pink) calc(40% + var(--rl, 0) * 3%), black)
+    !important;
+  box-shadow: 0 0 calc(var(--rl, 0) * 0.4px) calc(var(--rl, 0) * 0.12px)
+      color-mix(in srgb, var(--custom-pink) calc(var(--rl, 0) * 5%), transparent),
+    0 0 calc(var(--rl, 0) * 1px) calc(var(--rl, 0) * 0.25px)
+      color-mix(in srgb, var(--custom-pink) calc(var(--rl, 0) * 4.7%), transparent);
+}
+
+.rating-100-0 { --rl: 0; }
+.rating-100-1 { --rl: 1; }
+.rating-100-2 { --rl: 2; }
+.rating-100-3 { --rl: 3; }
+.rating-100-4 { --rl: 4; }
+.rating-100-5 { --rl: 5; }
+.rating-100-6 { --rl: 6; }
+.rating-100-7 { --rl: 7; }
+.rating-100-8 { --rl: 8; }
+.rating-100-9 { --rl: 9; }
+.rating-100-10 { --rl: 10; }
+.rating-100-11 { --rl: 11; }
+.rating-100-12 { --rl: 12; }
+.rating-100-13 { --rl: 13; }
+.rating-100-14 { --rl: 14; }
+.rating-100-15 { --rl: 15; }
+.rating-100-16 { --rl: 16; }
+.rating-100-17 { --rl: 17; }
+.rating-100-18 { --rl: 18; }
+.rating-100-19 { --rl: 19; }
+.rating-100-20 { --rl: 20; }
+
+.rating-1 { --rl: 4; }
+.rating-2 { --rl: 8; }
+.rating-3 { --rl: 12; }
+.rating-4 { --rl: 16; }
+.rating-5 { --rl: 20; }
+
+/* -----------------------------------------------------------------------------
+   14. LECTEUR VIDÉO (Video.js)
+   -------------------------------------------------------------------------- */
+.video-js .vjs-control-bar .vjs-skip-button,
+.video-js .vjs-control-bar .vjs-play-control,
+.video-js .vjs-control-bar .vjs-seek-button,
+.video-js .vjs-control-bar .vjs-mute-control,
+.video-js .vjs-control-bar .vjs-time-control {
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
+  background-color: color-mix(in srgb, var(--custom-darker) 35%, transparent);
+}
+
+.video-js.vjs-skip-buttons-prev .vjs-control-bar .vjs-skip-button.vjs-icon-previous-item {
+  border-top-left-radius: 999px;
+  border-bottom-left-radius: 999px;
+}
+.video-js:not(.vjs-skip-buttons-prev) .vjs-control-bar .vjs-play-control {
+  border-top-left-radius: 999px;
+  border-bottom-left-radius: 999px;
+}
+
+.video-js .vjs-control-bar .vjs-duration {
+  border-top-right-radius: 999px;
+  border-bottom-right-radius: 999px;
+  padding-right: 0.7em;
+}
+
+/* -----------------------------------------------------------------------------
+   15. PAGE DE CONNEXION (login)
+   -----------------------------------------------------------------------------*/
+body.login .text-input,
+body.login .text-input:focus,
+body.login .text-input[readonly] {
+  background-color: var(--custom-dark) !important;
+  border: 1px solid transparent;
+}
+
+body.login .text-input:focus {
+  outline: none;
+  border-color: var(--custom-pink);
+  box-shadow: var(--pink-focus);
+}
