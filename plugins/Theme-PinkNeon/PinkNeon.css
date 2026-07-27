@@ -576,6 +576,24 @@ div.react-select__menu {
   filter: var(--icon-glow-white);
 }
 
+.scrape-dialog .collapse-button,
+.scrape-dialog .collapse-button:hover,
+.scrape-dialog .collapse-button:focus,
+.scrape-dialog .collapse-button:active,
+.scrape-dialog .collapse-button.active {
+  color: #f5f8fa !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
+
+.scrape-dialog .collapse-button:hover {
+  text-shadow: var(--text-glow-white);
+}
+
+.scrape-dialog .collapse-button:hover svg {
+  filter: var(--icon-glow-white);
+}
+
 /* -----------------------------------------------------------------------------
    6. CARTES (scènes, galeries, etc.)
    -------------------------------------------------------------------------- */
