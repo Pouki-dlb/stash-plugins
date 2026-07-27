@@ -89,7 +89,6 @@
     setPanicTitle(hidden);
     setPanicFavicon(hidden);
     if (hidden) {
-      // Met en pause toute lecture en cours (sinon le son continuerait).
       var media = document.querySelectorAll("video, audio");
       for (var i = 0; i < media.length; i++) {
         try {
