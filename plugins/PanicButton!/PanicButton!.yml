@@ -1,5 +1,5 @@
 name: Panic Button!
-description: Press the "Insert" key to automatically replace the stash window with a black screen.
+description: Press the "Insert" key to automatically blank your screen.
 version: 1.0.0
 url: https://discourse.stashapp.cc/t/panic-button/12699
 ui:
