@@ -1,0 +1,7 @@
+name: Panic Button!
+description: Press the "Insert" key to automatically replace the stash window with a black screen.
+version: 1.0.0
+url: https://
+ui:
+  js:
+    - PanicButton!.js
