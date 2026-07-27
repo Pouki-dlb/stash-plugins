@@ -3,5 +3,5 @@ description: Press the "Insert" key to automatically replace the stash window wi
 version: 1.0.0
 url: https://
 ui:
-  js:
+  javascript:
     - PanicButton!.js
