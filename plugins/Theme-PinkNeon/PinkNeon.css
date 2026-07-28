@@ -224,8 +224,16 @@ input.btn-secondary.form-control:focus {
 .filter-item-header:focus,
 .filter-item-header.focus {
   outline: none;
-  border-color: var(--custom-pink) !important;
+  border-color: rgba(0, 0, 0, 0.125) !important;
   box-shadow: none !important;
+}
+
+.filter-item-header:hover {
+  text-shadow: var(--text-glow-white);
+}
+
+.filter-item-header:hover .collapse-icon {
+  filter: var(--icon-glow-white);
 }
 
 div.react-select__control,
@@ -245,6 +253,19 @@ div.react-select__menu {
 
 .react-select__option--is-selected:not(.react-select__option--is-focused) {
   background-color: var(--custom-dark) !important;
+}
+
+div.react-select__control .react-select__multi-value {
+  background-color: var(--custom-gray);
+}
+
+div.react-select__control .react-select__multi-value__label {
+  color: #f5f8fa;
+}
+
+.performer-select-value .performer-disambiguation,
+.performer-tag-container .performer-disambiguation {
+  color: #f5f8fa;
 }
 
 .react-select__multi-value__remove {
@@ -519,13 +540,12 @@ div.react-select__menu {
 }
 
 .modifier-option.btn:hover {
-  color: #f5f8fa !important;
-  border-bottom-color: var(--custom-pink) !important;
+  color: var(--custom-pink) !important;
+  text-shadow: var(--text-glow-pink);
 }
 
 .modifier-option.btn.selected {
   color: var(--custom-pink) !important;
-  border-bottom-color: var(--custom-pink) !important;
 }
 
 .scraper-menu .dropdown-toggle,
@@ -580,17 +600,68 @@ div.react-select__menu {
 .scrape-dialog .collapse-button:hover,
 .scrape-dialog .collapse-button:focus,
 .scrape-dialog .collapse-button:active,
-.scrape-dialog .collapse-button.active {
+.scrape-dialog .collapse-button.active,
+.setting .collapse-button,
+.setting .collapse-button:hover,
+.setting .collapse-button:focus,
+.setting .collapse-button:active,
+.setting .collapse-button.active {
   color: #f5f8fa !important;
   background-color: transparent !important;
   box-shadow: none !important;
 }
 
-.scrape-dialog .collapse-button:hover {
+.scrape-dialog .collapse-button:hover,
+.setting .collapse-button:hover {
   text-shadow: var(--text-glow-white);
 }
 
-.scrape-dialog .collapse-button:hover svg {
+.scrape-dialog .collapse-button:hover svg,
+.setting .collapse-button:hover svg {
+  filter: var(--icon-glow-white);
+}
+
+.changelog-version-header .btn,
+.changelog-version-header .btn:hover,
+.changelog-version-header .btn:focus,
+.changelog-version-header .btn:active {
+  text-decoration: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  transition: color var(--t), text-shadow var(--t);
+}
+
+.changelog-version-header .btn:hover {
+  color: #f5f8fa !important;
+  text-shadow: var(--text-glow-white);
+}
+
+.changelog-version-header .btn:hover svg {
+  filter: var(--icon-glow-white);
+}
+
+#configuration-tabs-tabpane-metadata-providers .collapse-button,
+#configuration-tabs-tabpane-metadata-providers .collapse-button:hover,
+#configuration-tabs-tabpane-metadata-providers .collapse-button:focus,
+#configuration-tabs-tabpane-metadata-providers .collapse-button:active,
+#configuration-tabs-tabpane-metadata-providers .collapse-button.active,
+#configuration-tabs-tabpane-metadata-providers .source-collapse .btn,
+#configuration-tabs-tabpane-metadata-providers .source-collapse .btn:hover,
+#configuration-tabs-tabpane-metadata-providers .source-collapse .btn:focus,
+#configuration-tabs-tabpane-metadata-providers .source-collapse .btn:active {
+  color: #f5f8fa !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+#configuration-tabs-tabpane-metadata-providers .collapse-button:hover,
+#configuration-tabs-tabpane-metadata-providers .source-collapse .btn:hover {
+  text-shadow: var(--text-glow-white);
+}
+
+#configuration-tabs-tabpane-metadata-providers .collapse-button:hover svg,
+#configuration-tabs-tabpane-metadata-providers .source-collapse .btn:hover svg {
   filter: var(--icon-glow-white);
 }
 
@@ -713,28 +784,24 @@ div.react-select__menu {
    7 bis. HALO DE LA BARRE DE SOULIGNEMENT AU SURVOL
    -----------------------------------------------------------------------------*/
 .top-nav .btn.minimal:not(.brand-link):hover,
-.modifier-option.btn:hover,
 .button-group-above .btn:hover,
-.sidebar .collapse-button:hover,
 .nav-tabs .nav-link:hover,
 .nav-pills .nav-link:hover {
   position: relative;
 }
 
 .top-nav .btn.minimal:not(.brand-link):hover::before,
-.modifier-option.btn:hover::before,
 .button-group-above .btn:hover::before,
-.sidebar .collapse-button:hover::before,
 .nav-tabs .nav-link:hover::before,
 .nav-pills .nav-link:hover::before {
   content: "";
   position: absolute;
   left: 0;
   right: 0;
-  bottom: -1px; /* calé sur le soulignement (bord bas) */
+  bottom: -1px;
   height: 1px;
   box-shadow: var(--pink-underline-glow);
-  pointer-events: none; /* n'intercepte pas les clics */
+  pointer-events: none;
 }
 
 /* -----------------------------------------------------------------------------
@@ -756,7 +823,7 @@ div.react-select__menu {
   transition: filter var(--t);
 }
 
-.filtered-list-toolbar .btn:not(.btn-danger):hover svg {
+.filtered-list-toolbar .btn:not(.btn-danger):not(.delete-button):hover svg {
   filter: var(--icon-glow-white);
 }
 
@@ -952,6 +1019,7 @@ div.dropdown-menu {
 /* -----------------------------------------------------------------------------
    8 bis. CALENDRIER (react-datepicker) — ex. filtres de date dans Edit Filter
    -----------------------------------------------------------------------------*/
+
 div.react-datepicker {
   background-color: var(--custom-dark) !important;
   border-color: var(--custom-darker) !important;
@@ -1038,24 +1106,37 @@ div.react-datepicker
   border-bottom: 1px solid var(--custom-darker);
 }
 
-.sidebar .collapse-button {
+.sidebar .collapse-button,
+.sidebar .collapse-button:hover,
+.sidebar .collapse-button:focus,
+.sidebar .collapse-button:active,
+.sidebar .collapse-button.active {
   color: #f5f8fa !important;
   background-color: transparent !important;
-  border-bottom: 2px solid transparent !important;
   box-shadow: none !important;
-  transition: color var(--t), border-color var(--t);
 }
 
 .sidebar .collapse-button:hover {
-  color: #f5f8fa !important;
-  border-bottom-color: var(--custom-pink) !important;
+  text-shadow: var(--text-glow-white);
 }
 
-.sidebar .collapse-button:active,
-.sidebar .collapse-button:focus,
-.sidebar .collapse-button.active {
-  color: var(--custom-pink) !important;
-  border-bottom-color: var(--custom-pink) !important;
+.sidebar .collapse-button:hover svg {
+  filter: var(--icon-glow-white);
+}
+
+.sidebar-saved-filter-list-container .save-filter-button,
+.sidebar-saved-filter-list-container .set-as-default-button,
+.saved-filter-list-menu .set-as-default-button {
+  background-color: transparent !important;
+  box-shadow: none !important;
+  transition: color var(--t), text-shadow var(--t);
+}
+
+.sidebar-saved-filter-list-container .save-filter-button:hover,
+.sidebar-saved-filter-list-container .set-as-default-button:hover,
+.saved-filter-list-menu .set-as-default-button:hover {
+  color: #f5f8fa !important;
+  text-shadow: var(--text-glow-white);
 }
 
 /* -----------------------------------------------------------------------------
@@ -1096,6 +1177,7 @@ div.react-datepicker
 /* -----------------------------------------------------------------------------
    11. CONTRÔLES (switches, sliders)
    -------------------------------------------------------------------------- */
+.custom-control-label::before,
 .custom-control-input:focus ~ .custom-control-label::before,
 .custom-control-input:active ~ .custom-control-label::before,
 .custom-control-input:checked ~ .custom-control-label::before {
@@ -1164,6 +1246,31 @@ input[type="checkbox"] {
   box-shadow: var(--pink-glow) !important;
 }
 
+.double-range-slider-min::-webkit-slider-runnable-track {
+  background: color-mix(in srgb, var(--custom-pink) 22%, var(--custom-darker)) !important;
+}
+.double-range-slider-min::-moz-range-track {
+  background: color-mix(in srgb, var(--custom-pink) 22%, var(--custom-darker)) !important;
+}
+
+.double-range-slider::-webkit-slider-thumb {
+  background: var(--custom-pink) !important;
+  border-color: var(--custom-pink) !important;
+  transition: box-shadow var(--t);
+}
+.double-range-slider::-moz-range-thumb {
+  background: var(--custom-pink) !important;
+  border-color: var(--custom-pink) !important;
+  transition: box-shadow var(--t);
+}
+
+.double-range-sliders:hover .double-range-slider::-webkit-slider-thumb {
+  box-shadow: var(--pink-glow) !important;
+}
+.double-range-sliders:hover .double-range-slider::-moz-range-thumb {
+  box-shadow: var(--pink-glow) !important;
+}
+
 /* -----------------------------------------------------------------------------
    12. TAGS, BADGES, PROGRESSION, FAVORI
    -------------------------------------------------------------------------- */
@@ -1188,6 +1295,23 @@ input[type="checkbox"] {
 
 .filter-tags .tag-item .btn-secondary:hover svg {
   filter: var(--icon-glow-red);
+}
+
+.scrape-dialog .tag-item .btn,
+.scrape-dialog .tag-item .btn:hover,
+.scrape-dialog .tag-item .btn:focus,
+.scrape-dialog .tag-item .btn:active {
+  color: #f5f8fa !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
+
+.scrape-dialog .tag-item .btn svg {
+  transition: filter var(--t);
+}
+
+.scrape-dialog .tag-item .btn:hover svg {
+  filter: var(--icon-glow-white);
 }
 
 .progress-bar {
@@ -1508,7 +1632,6 @@ a[href*="/help/"]:hover svg,
   margin-right: 0.5rem;
 }
 
-/* Task queue (à part) dans les options */
 #tasks-panel .tasks-panel-queue {
   background-color: transparent;
 }
@@ -1635,20 +1758,4 @@ a[href*="/help/"]:hover svg,
   border-top-right-radius: 999px;
   border-bottom-right-radius: 999px;
   padding-right: 0.7em;
-}
-
-/* -----------------------------------------------------------------------------
-   15. PAGE DE CONNEXION (login)
-   -----------------------------------------------------------------------------*/
-body.login .text-input,
-body.login .text-input:focus,
-body.login .text-input[readonly] {
-  background-color: var(--custom-dark) !important;
-  border: 1px solid transparent;
-}
-
-body.login .text-input:focus {
-  outline: none;
-  border-color: var(--custom-pink);
-  box-shadow: var(--pink-focus);
 }

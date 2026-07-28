@@ -1,7 +1,7 @@
 name: Theme - Pink Neon
-description: Dark premium theme with a hint of neon pink 
-version: 1.0.0
-url: https://discourse.stashapp.cc/t/theme-pink-neon/12696
+description: Pink Neon is a dark, elegantly neon-tinted theme.
+version: 1.0.1
+url: https://
 ui:
   css:
     - PinkNeon.css
