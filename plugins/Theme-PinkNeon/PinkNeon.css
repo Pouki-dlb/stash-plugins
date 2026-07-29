@@ -674,10 +674,14 @@ div.react-select__control .react-select__multi-value__label {
 
 .card hr {
   border-color: var(--custom-pink);
-  box-shadow: var(--pink-underline-glow);
   width: 90%;
   margin-left: auto;
   margin-right: auto;
+  transition: box-shadow var(--t);
+}
+
+.card:hover hr {
+  box-shadow: var(--pink-underline-glow);
 }
 
 .scene-card,
@@ -1321,7 +1325,7 @@ input[type="checkbox"] {
 .LoadingIndicator,
 .LoadingIndicator .spinner-border,
 .LoadingIndicator .LoadingIndicator-message {
-  color: var(--custom-darker);
+  color: #f5f8fa;
 }
 
 .slick-dots li button:hover::before {
