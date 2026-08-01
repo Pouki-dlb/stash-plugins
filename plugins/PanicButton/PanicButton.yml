@@ -1,6 +1,7 @@
 name: PanicButton!
 description: Pause playback, cover the screen and disguise the browser tab with a single key press.
 version: 2.0.0
+url: https://discourse.stashapp.cc/t/panic-button/12699
 
 ui:
   javascript:
@@ -8,20 +9,10 @@ ui:
   css:
     - PanicButton.css
 
-# Stash affiche les réglages triés par ordre alphabétique de leur clé, et non
-# dans l'ordre de ce fichier (pkg/plugin/config.go, sort.Strings). Le préfixe
-# numérique est donc le seul moyen de maîtriser l'affichage.
-#
-# Groupes :  01-02 arrière-plan   03-04 onglet
-#            05-21 touches        22    champ libre
-#
-# Pour insérer une option, garde deux chiffres et renumérote le groupe concerné.
 settings:
   # --- Arrière-plan ---------------------------------------------------------
   01overlayColor:
     displayName: Overlay colour
-    # Guillemets obligatoires : hors chaîne quotée, le # de #000000 ouvre un
-    # commentaire YAML et tronque la description à "for example".
     description: 'The colour of the screen shown while hidden. Any CSS colour works, for example #000000 or white. Defaults to black.'
     type: STRING
   02overlayImageUrl:
@@ -100,12 +91,6 @@ settings:
     displayName: "Trigger on: F10"
     description: Opens the menu bar in some browsers. On a Mac, needs Fn unless function keys are set to standard behaviour.
     type: BOOLEAN
-  # F11 et F12 ne sont volontairement pas proposées : les navigateurs se les
-  # réservent pour le plein écran et les outils de développement, et un plugin
-  # ne peut pas les intercepter de façon fiable. Les numéros 20 et 21 restent
-  # libres.
-
-  # --- Champ libre ----------------------------------------------------------
   22customTriggerKeys:
     displayName: Additional trigger keys
     description: 'For anything not in the list above, including key combinations. Separate several with commas, for example: ctrl+shift+h, Home. On a Mac use cmd instead of ctrl, for example cmd+shift+h. Leave blank if the checkboxes are enough.'
