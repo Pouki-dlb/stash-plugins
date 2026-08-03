@@ -12,7 +12,7 @@
  * `configuration.plugins` à son montage (commentaire "only initialise once"
  * dans ui/v2.5/src/components/Settings/context.tsx) et renvoie cet instantané à
  * `configurePlugin`, qui remplace toute la map. Tout ce qui a été enregistré
- * depuis est perdu — y compris des favoris. Voir le README.
+ * depuis est perdu — y compris des favoris.
  *
  * On passe par des requêtes GraphQL brutes plutôt que par PluginApi.GQL :
  * l'intercepteur de tâches tourne en dehors de tout composant React, donc les
