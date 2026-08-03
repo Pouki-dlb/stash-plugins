@@ -1,0 +1,24 @@
+name: Quick Folders
+description: Shortcuts to your recent and pinned folders, above the folder browser of selective tasks.
+version: 1.0.0
+url: https://discourse.stashapp.cc/c/plugins/18/none
+
+ui:
+  javascript:
+    - QuickFolders.js
+  css:
+    - QuickFolders.css
+
+settings:
+  autoRun:
+    displayName: Run task immediately
+    description: When enabled, clicking a shortcut confirms the dialog and starts the task straight away on that folder, instead of only adding it to the selection.
+    type: BOOLEAN
+  maxEntries:
+    displayName: Number of recent folders
+    description: How many recently used folders to keep and show. Default 8, maximum 20. Pinned favourites are a separate list and are never limited.
+    type: NUMBER
+  showFullPath:
+    displayName: Show full paths
+    description: Display the complete path on each shortcut instead of just the folder name.
+    type: BOOLEAN
