@@ -1,0 +1,43 @@
+/**
+ * Les styles du plugin, compilés vers dist/StashPluginTemplate.css.
+ *
+ * Deux conseils tirés de plugins existants :
+ *
+ * 1. Préfixe toutes tes classes (ici "spt-"). L'interface de Stash et les
+ *    autres plugins partagent la même page : sans préfixe, les collisions de
+ *    noms sont une question de temps.
+ *
+ * 2. Passe par des variables CSS pour tout ce qui touche à l'apparence. Ça
+ *    permet à l'utilisateur de réajuster ton plugin depuis
+ *    Settings > Interface > Custom CSS, sans le recompiler - et ça évite que
+ *    ton plugin jure avec les thèmes.
+ */
+
+:root {
+  --spt-badge-bg-color: rgba(0, 0, 0, 0.6);
+  --spt-badge-color: #f5f8fa;
+  --spt-badge-font-size: 12px;
+  --spt-badge-radius: 4px;
+}
+
+.spt-badge {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 4px;
+  padding: 2px 6px;
+  border-radius: var(--spt-badge-radius);
+  background-color: var(--spt-badge-bg-color);
+  color: var(--spt-badge-color);
+  font-size: var(--spt-badge-font-size);
+
+  &__text {
+    font-weight: 700;
+    letter-spacing: 0.04em;
+  }
+
+  &__id {
+    opacity: 0.6;
+  }
+}

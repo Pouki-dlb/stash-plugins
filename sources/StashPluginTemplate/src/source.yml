@@ -1,0 +1,36 @@
+# Manifeste du plugin. Stash lit ce fichier pour savoir quoi charger et quelles
+# options afficher dans Settings > Plugins.
+#
+# Il est copié tel quel dans dist/ et renommé d'après le pluginID défini dans
+# webpack.common.js.
+
+name: Stash Plugin Template
+description: A starter template for a Stash UI plugin, built with TypeScript and React.
+version: 0.1.0
+
+# Les fichiers injectés dans l'interface de Stash. Les noms doivent correspondre
+# à ceux produits par webpack, donc au pluginID.
+ui:
+  javascript:
+    - StashPluginTemplate.js
+  css:
+    - StashPluginTemplate.css
+
+# Les options affichées dans Settings > Plugins, sous le nom du plugin.
+# Types acceptés : BOOLEAN, NUMBER, STRING.
+#
+# À savoir : Stash ne stocke une option que lorsqu'elle a été modifiée au moins
+# une fois. Tant que l'utilisateur n'y touche pas, elle vaut `undefined` côté
+# code - d'où les valeurs par défaut posées dans main.tsx.
+#
+# Les textes ci-dessous sont visibles dans l'interface : ils s'écrivent en
+# anglais.
+settings:
+  badgeText:
+    displayName: Badge text
+    description: The text displayed in the badge added to each scene card. Leave blank to use the default.
+    type: STRING
+  showBadge:
+    displayName: Show the demo badge
+    description: When enabled, a small badge is added to the bottom of every scene card. This is the template's example feature - remove it once you start building your own.
+    type: BOOLEAN
