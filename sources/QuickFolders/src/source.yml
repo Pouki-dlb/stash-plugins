@@ -1,7 +1,7 @@
 name: Quick Folders
 description: Shortcuts to your recent and pinned folders, above the folder browser of selective tasks.
 version: 1.0.0
-url: https://discourse.stashapp.cc/c/plugins/18/none
+url: https://discourse.stashapp.cc/t/quick-folders/13208
 
 ui:
   javascript:
