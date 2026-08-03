@@ -1,6 +1,7 @@
 name: PanicButton!
 description: Pause playback, cover the screen and disguise the browser tab with a single key press.
 version: 2.0.0
+url: https://discourse.stashapp.cc/t/panic-button/12699
 
 ui:
   javascript:
