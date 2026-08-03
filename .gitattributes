@@ -1,0 +1,9 @@
+# Git est configuré ici avec core.autocrlf=true : il réécrit les fichiers en
+# CRLF à chaque sortie de l'index. Les manifestes, eux, sont produits par
+# webpack, qui écrit en LF. Après un checkout, le premier build les ferait donc
+# réapparaître comme entièrement modifiés, alors que seule une ligne a bougé.
+#
+# Les .js et .css livrés n'ont pas ce problème : minifiés, ils tiennent sur une
+# seule ligne et ne contiennent aucune fin de ligne à convertir.
+*.yml text eol=lf
+*.yaml text eol=lf
