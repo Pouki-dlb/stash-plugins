@@ -1,0 +1,2873 @@
+/* =============================================================================
+   PRINCIPES DE DESIGN — À LIRE EN PREMIER (pour un humain comme pour une IA)
+   -----------------------------------------------------------------------------
+   Ce fichier suit un système cohérent. Avant toute modification, respecte ces
+   règles : elles résument précisément le style voulu. En cas de doute, imite une
+   règle existante du même type plutôt que d'inventer.
+
+   1. PALETTE — le rose (--custom-pink #e83e8c) est le SEUL accent. Deux gris de fond
+      (--custom-dark #212830, --custom-darker #151b23), un gris d'éléments
+      (--custom-gray #4d4d4d). Rien d'autre. Tout est factorisé dans :root.
+
+   2. AUCUN REMPLISSAGE BRUT. On n'inonde JAMAIS un bouton/onglet/pilule d'un aplat
+      de couleur (ni rose, ni le bleu Bootstrap, ni l'ancien fond #202b33 supprimé).
+      Le rose est un ACCENT : texte, soulignement, petit indicateur. Les fonds des
+      éléments interactifs restent transparents.
+
+   3. COMPORTEMENT « ONGLET » — c'est LE motif récurrent (menu du header, onglets de
+      scène .nav-tabs, menu Settings .nav-pills, compteurs .card-popovers, menus ⋮
+      Operations, pilules de filtre .modifier-option, modes d'édition de masse
+      .button-group-above, en-têtes d'accordéon de la sidebar .collapse-button…) :
+        • repos    : texte BLANC, pas de fond, pas de soulignement ;
+        • survol   : texte blanc + SOULIGNEMENT ROSE qui BRILLE ;
+        • actif/sélectionné/cliqué : texte ROSE + soulignement rose PERSISTANT.
+      Le soulignement se fait via une bordure basse (transparente au repos → rose),
+      jamais par un changement de hauteur (pas de saut de layout).
+
+   4. LE HALO DE SOULIGNEMENT NE BRILLE QU'AU SURVOL. Un trait qui persiste pour une
+      autre raison (onglet actif, menu déroulé, focus gardé après un clic) reste
+      affiché mais NE brille PLUS. Techniquement : pseudo-élément ::before posé
+      uniquement en :hover (voir « 7 bis »), variable --pink-underline-glow. Seule la
+      BARRE brille, pas le cadre du bouton.
+
+   5. GLOWS D'ICÔNES = drop-shadow, PAS box-shadow. Les petites icônes d'action
+      brillent DANS LEUR PROPRE COULEUR au survol, avec un halo qui épouse la FORME
+      de l'icône (deux drop-shadow empilés). Variables : --icon-glow-red (suppr.,
+      croix), --icon-glow-green (ajout, +), --icon-glow-white (disquette, punaise),
+      --icon-glow-gray (chevrons). Poser le filter sur le SVG (pas sur le bouton : un
+      bouton à fond opaque ferait retomber le halo sur le rectangle). Au survol : la
+      couleur de l'icône NE change PAS (ou reste sa couleur d'état), aucun fond.
+      → Les --*-glow (--pink-glow, --danger-glow…) sont des box-shadow RECTANGULAIRES
+        (boutons pleins). Les --icon-glow-* sont des valeurs de `filter`. Non
+        interchangeables.
+
+   6. RIEN DE PLUS AU CLIC. Pas de flash blanc, pas de fond qui se remplit, pas de
+      halo de focus bleu qui persiste. On neutralise dans TOUS les états concernés.
+
+   7. ANTI-BLEU BOOTSTRAP. Partout où Bootstrap réintroduit son bleu ($primary) ou son
+      halo de focus (fonds actifs, anneaux de focus), on force `transparent` / `none`.
+      NB : pour retirer un fond, mettre `transparent` — ne pas juste supprimer la
+      propriété, sinon le défaut Bootstrap réapparaît.
+
+   8. RÈGLE D'OR DE SCOPING (très important). NE JAMAIS modifier globalement
+      `.btn-primary` / `.btn-secondary` : ça casse d'autres boutons du site (« le
+      serpent qui se mord la queue »). On CIBLE toujours un conteneur/classe précis
+      (ex. .button-group-above, .sidebar .collapse-button) et on bat les règles
+      globales avec `!important` LOCALEMENT. Notre CSS étant chargé en dernier, un
+      sélecteur de même spécificité suffit souvent ; !important seulement si une règle
+      Bootstrap/Stash est plus spécifique.
+
+   9. PAS DE SAUT DE LAYOUT. Bordures transparentes réservées au repos, ou box-shadow
+      inset (ex. soulignement du calendrier), pour que l'apparition d'un trait/halo ne
+      décale rien.
+
+   10. TRANSITIONS douces via --t (0.16s). Les effets de survol apparaissent en fondu.
+
+   En résumé : fond sombre + rose en accent, comportement « onglet » (blanc → survol
+   souligné rose brillant → actif rose), icônes qui brillent dans leur couleur, aucun
+   aplat brut, aucun bleu Bootstrap, et un scoping strict pour ne rien casser ailleurs.
+   ============================================================================= */
+
+/* -----------------------------------------------------------------------------
+   1. VARIABLES
+   -------------------------------------------------------------------------- */
+:root {
+  /* Palette (inchangée) */
+  --custom-gray: #4d4d4d;
+  --custom-darker: #151b23;
+  --custom-dark: #212830;
+  --custom-pink: #e83e8c;
+
+  /* Dérivés factorisés (glow / focus / transitions) */
+  /* Halos ROSE « néon » : un cœur VIF et SERRÉ (haute opacité, petit flou) + des couches larges
+     et douces empilées → effet lumineux qui « émet », sans être criard. */
+  --pink-glow: 0 0 3px 1px color-mix(in srgb, var(--custom-pink) 90%, transparent),
+    0 0 10px 3px color-mix(in srgb, var(--custom-pink) 55%, transparent),
+    0 0 20px 7px color-mix(in srgb, var(--custom-pink) 28%, transparent);
+  --pink-focus: 0 0 2px 1px color-mix(in srgb, var(--custom-pink) 85%, transparent),
+    0 0 6px 2px color-mix(in srgb, var(--custom-pink) 45%, transparent);
+  /* Halo de la BARRE de soulignement au survol (juste la barre, pas le cadre). */
+  --pink-underline-glow: 0 0 3px 1px color-mix(in srgb, var(--custom-pink) 85%, transparent),
+    0 0 8px 2px color-mix(in srgb, var(--custom-pink) 50%, transparent);
+  /* Mêmes halos « néon » (cœur vif + couches larges) pour les autres box-shadow : gris (boutons
+     secondaires), rouge (danger), vert (succès). Le gris reste naturellement discret (teinte
+     sombre peu saturée). */
+  --gray-glow: 0 0 3px 1px color-mix(in srgb, var(--custom-gray) 90%, transparent),
+    0 0 10px 3px color-mix(in srgb, var(--custom-gray) 55%, transparent),
+    0 0 20px 7px color-mix(in srgb, var(--custom-gray) 28%, transparent);
+  --danger-glow: 0 0 3px 1px rgba(219, 55, 55, 0.9),
+    0 0 10px 3px rgba(219, 55, 55, 0.55),
+    0 0 20px 7px rgba(219, 55, 55, 0.28);
+  --success-glow: 0 0 3px 1px rgba(15, 153, 96, 0.9),
+    0 0 10px 3px rgba(15, 153, 96, 0.55),
+    0 0 20px 7px rgba(15, 153, 96, 0.28);
+
+  /* Glows d'ICÔNES épousant la forme (valeurs de `filter` : TROIS drop-shadow empilés « néon » —
+     un noyau vif et serré + deux halos larges et doux). À distinguer des *-glow ci-dessus, qui
+     sont des box-shadow rectangulaires. Utilisés au survol des petites icônes (corbeille, croix,
+     +, disquette, punaise, chevrons…). */
+  --icon-glow-red: drop-shadow(0 0 2px rgba(219, 55, 55, 0.95))
+    drop-shadow(0 0 5px rgba(219, 55, 55, 0.65))
+    drop-shadow(0 0 11px rgba(219, 55, 55, 0.35));
+  --icon-glow-green: drop-shadow(0 0 2px rgba(15, 153, 96, 0.95))
+    drop-shadow(0 0 5px rgba(15, 153, 96, 0.65))
+    drop-shadow(0 0 11px rgba(15, 153, 96, 0.35));
+  --icon-glow-white: drop-shadow(0 0 2px rgba(255, 255, 255, 0.95))
+    drop-shadow(0 0 5px rgba(255, 255, 255, 0.65))
+    drop-shadow(0 0 11px rgba(255, 255, 255, 0.35));
+  --icon-glow-gray: drop-shadow(0 0 2px rgba(160, 160, 160, 0.95))
+    drop-shadow(0 0 5px rgba(160, 160, 160, 0.65))
+    drop-shadow(0 0 11px rgba(160, 160, 160, 0.35));
+  /* Halo ROSE pour icônes (même modèle : noyau vif + halo doux). Dérivé de --custom-pink pour
+     rester dans la palette. Ex. l'étoile de notation survolée. */
+  --icon-glow-pink: drop-shadow(0 0 2px color-mix(in srgb, var(--custom-pink) 95%, transparent))
+    drop-shadow(0 0 5px color-mix(in srgb, var(--custom-pink) 65%, transparent))
+    drop-shadow(0 0 11px color-mix(in srgb, var(--custom-pink) 35%, transparent));
+
+  /* Équivalent TEXTE du halo blanc (--icon-glow-white est un `filter` pour la forme des
+     icônes SVG ; celui-ci est un `text-shadow`, à poser sur du texte : liens, pilules…).
+     Mêmes flous / opacités → rendu identique. */
+  --text-glow-white: 0 0 2px rgba(255, 255, 255, 0.95),
+    0 0 5px rgba(255, 255, 255, 0.65),
+    0 0 11px rgba(255, 255, 255, 0.35);
+
+  /* Équivalent TEXTE du halo rose néon (--icon-glow-pink est un `filter` pour les SVG ; celui-ci
+     un `text-shadow`, à poser sur du texte — ex. puces du carrousel au survol). */
+  --text-glow-pink: 0 0 2px color-mix(in srgb, var(--custom-pink) 95%, transparent),
+    0 0 5px color-mix(in srgb, var(--custom-pink) 65%, transparent),
+    0 0 11px color-mix(in srgb, var(--custom-pink) 35%, transparent);
+
+  /* Timings communs */
+  --t: 0.16s ease;
+}
+
+/* -----------------------------------------------------------------------------
+   2. BASE
+   -------------------------------------------------------------------------- */
+body {
+  background-color: var(--custom-dark);
+}
+
+/* Liens */
+a,
+.btn-link {
+  color: #fff;
+  transition: color var(--t), text-shadow var(--t);
+}
+
+/* Au survol : on NE passe PLUS au rose. TOUS les liens restent BLANCS. Le `color:#fff` est
+   INDISPENSABLE : sans lui, le a:hover de Bootstrap reprend la main et passe les liens au
+   BLEU ($link-color #48aff0) — il est plus spécifique (0,1,1) que le a { color:#fff } de base
+   (0,0,1). Notre a:hover (0,1,1) chargé en dernier bat celui de Bootstrap. Soulignement retiré
+   comme avant. */
+a:hover,
+.btn-link:hover {
+  color: #fff;
+  text-decoration: none;
+}
+
+/* …et EN PLUS, les liens de CONTENU brillent en blanc au survol (text-shadow via
+   --text-glow-white — l'équivalent texte du halo des icônes). Harmonise les pilules de tags
+   (libellé = <a>), les liens de descriptions / IDs, etc.
+   • text-shadow (et non `filter`) → ne fait briller QUE le texte, jamais une image/carte
+     enveloppée dans un <a>.
+   • :not(.nav-link) → on épargne les onglets (nav-tabs / nav-pills).
+   • :not(.btn) → ESSENTIEL : les BOUTONS rendus comme des <a> (Button avec href via
+     LinkContainer — c'est le cas des items du menu HEADER, .btn.minimal) ne doivent PAS
+     recevoir ce glow ; ils ont leur propre style « onglet » (soulignement rose). Sans ça, le
+     texte du menu brillait en blanc au survol et se mélangeait au rose de l'item actif. Les
+     vrais liens de contenu (tags, descriptions, IDs) ne sont pas des .btn → ils brillent bien.
+     Les boutons sociaux (.external-links-button…, qui sont .btn) ont, eux, leur propre glow
+     par filter (section 12) — cohérent. */
+a:hover:not(.nav-link):not(.btn) {
+  text-shadow: var(--text-glow-white);
+}
+
+/* Barre de défilement discrète (gris ; rose seulement au survol) */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--custom-dark);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--custom-gray);
+  border-radius: 6px;
+  border: 2px solid var(--custom-dark);
+  transition: background var(--t);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--custom-pink);
+}
+
+/* -----------------------------------------------------------------------------
+   3. NAVBAR / MENU DU HAUT
+   -------------------------------------------------------------------------- */
+.bg-dark {
+  background-color: var(--custom-darker) !important;
+}
+
+/* Pas de glow bleu/rose sur les boutons du menu haut */
+.bg-dark .btn-primary {
+  box-shadow: none !important;
+}
+
+/* --- Bouton « New » de la navbar (apparaît quand newPath existe : pages scène, groupe,
+   galerie, performer, studio…). C'est un <Button variant="primary"> → .btn-primary, donc
+   par défaut ROSE + glow rose comme tout bouton primaire. CHOIX ASSUMÉ : on veut CE bouton,
+   et lui SEUL, en SECONDAIRE (gris + glow gris au survol).
+
+   ⚠️ POUR LES FUTURS CODEURS — pourquoi ça ne casse PAS les autres boutons primaires :
+   • On ne touche JAMAIS .btn-primary globalement (règle d'or de scoping, cf. en-tête §8).
+   • Le sélecteur est verrouillé à .top-nav .navbar-buttons .btn-primary:not(.minimal) :
+     dans cette zone, le SEUL bouton primaire non-.minimal est « New » (les entrées de menu
+     sont .minimal ; le logo « Stash » est .brand-link et vit dans .navbar-brand, hors
+     .navbar-buttons). Donc ce sélecteur ne matche que « New ».
+   • Le !important bat LOCALEMENT les règles roses des .btn-primary de la section 5
+     (fond au repos, au :hover, au :active, au :focus:not(:hover) après clic — sinon Stash/
+     ma section 5 repeindraient en rose dans ces états). Il est cantonné à la navbar, donc
+     sans effet ailleurs.
+
+   Fond/bordure gris dans TOUS les états ; glow gris (--gray-glow, la variable des
+   .btn-secondary) au survol seulement. Au repos, .bg-dark .btn-primary (juste au-dessus)
+   retire déjà tout glow → le halo n'apparaît qu'au survol. */
+.top-nav .navbar-buttons .btn-primary:not(.minimal),
+.top-nav .navbar-buttons .btn-primary:not(.minimal):hover,
+.top-nav .navbar-buttons .btn-primary:not(.minimal):focus,
+.top-nav .navbar-buttons .btn-primary:not(.minimal):active {
+  background-color: var(--custom-gray) !important;
+  border-color: var(--custom-gray) !important;
+}
+
+.top-nav .navbar-buttons .btn-primary:not(.minimal):hover {
+  box-shadow: var(--gray-glow) !important;
+}
+
+/* Logo (favicon) devant le nom */
+body .top-nav .navbar-brand button::before {
+  content: "";
+  display: inline-block;
+  width: 17px;
+  height: 17px;
+  margin: 0 5px 0 0;
+  vertical-align: middle; /* aligne l'icône avec le texte */
+  position: relative;
+  top: -3px; /* remonte légèrement l'icône */
+  background: url("/favicon.ico") center / contain no-repeat;
+}
+
+.brand-link:focus,
+.brand-link:active,
+.brand-link:hover {
+  background-color: transparent !important;
+}
+
+/* Nom du site « Stash » en haut à gauche : en gras et blanc. C'est un bouton
+   .btn-primary (bug Stash), mais on ne cible QUE lui via .brand-link. */
+.btn.brand-link {
+  font-weight: 700;
+  color: #f5f8fa;
+}
+
+/* Badge « hub » après le nom */
+body .top-nav .navbar-brand button::after {
+  content: "hub";
+  display: inline-block;
+  background: var(--custom-pink);
+  color: var(--custom-darker);
+  font-weight: 700;
+  border-radius: 3px;
+  margin: 0 0 0 3px;
+  padding: 0 2px;
+  box-shadow: var(--pink-glow);
+}
+
+/* -----------------------------------------------------------------------------
+   4. CHAMPS & FORMULAIRES
+   -------------------------------------------------------------------------- */
+.clearable-text-field,
+.clearable-text-field:active,
+.clearable-text-field:focus {
+  background-color: var(--custom-darker);
+}
+
+/* Réserve l'espace de la bordure de focus : bordure transparente de 1px au repos.
+   Sans ça, la bordure rose qui apparaît au focus (border 0 → 1px) décalait la barre
+   de recherche des filtres. Transparent au repos = invisible mais place réservée. */
+.clearable-text-field {
+  border: 1px solid transparent;
+}
+
+.input-control,
+.bg-secondary,
+.text-input,
+.text-input:focus,
+.text-input[readonly],
+.text-input:disabled {
+  background-color: var(--custom-darker) !important;
+}
+
+/* Focus rose discret sur les champs texte */
+.form-control:not(.card-check):focus,
+.input-control:focus,
+.text-input:focus,
+.clearable-text-field:focus {
+  /* Bordure rose pleine + halo : donne le même rendu net et lumineux que les
+     champs à autocomplétion (react-select). */
+  border: 1px solid var(--custom-pink);
+  box-shadow: var(--pink-focus);
+  color: #f5f8fa;
+  transition: box-shadow var(--t), border-color var(--t);
+}
+
+/* Champ « Filter name » des filtres sauvegardés (dans un input-group, avec le bouton
+   disquette accolé). Il porte .border-secondary (bordure bleu-gris forcée en
+   !important) + le halo de focus bleu de Bootstrap. On force le style uniforme :
+   bordure transparente au repos, rose + halo au focus. Sélecteur volontairement
+   très spécifique (élément input + toutes les classes + contexte input-group). */
+input.bg-secondary.border-secondary.form-control,
+.input-group input.bg-secondary.border-secondary {
+  border: 1px solid transparent !important;
+}
+
+input.bg-secondary.border-secondary.form-control:focus,
+.input-group input.bg-secondary.border-secondary:focus {
+  border: 1px solid var(--custom-pink) !important;
+  box-shadow: var(--pink-focus) !important;
+}
+
+/* Champ de recherche « parmi les filtres » (en-tête de la modale Edit Filter).
+   Bug côté Stash : cet input porte la classe .btn-secondary, donc il hérite du
+   comportement d'un BOUTON (fond gris, glow au survol). On le force à se comporter
+   comme un champ texte : pas de glow au survol, bordure transparente au repos, bordure
+   rose + halo au focus — comme tous les autres champs.
+   EXCEPTION DE FOND : --custom-dark, et non le --custom-darker de tous les autres champs.
+   Raison : ce champ vit dans un .modal-header, passé à --custom-darker en §10 — au fond
+   standard, il serait invisible, fondu dans son en-tête. On applique donc ici le MÊME
+   raisonnement qu'aux items de critère plus bas, mais en sens inverse : là on éclaircit le
+   CONTENANT, ici on ne peut éclaircir que le CHAMP, l'en-tête de modale étant partagé par
+   tout le site.
+   SANS RISQUE AILLEURS : la classe .search-input (token exact) n'existe QUE sur cet input,
+   dans EditFilterDialog.tsx. Le champ de recherche des filtres sauvegardés porte une autre
+   classe (.saved-filter-search-input), qui n'est pas matchée.
+
+   ⚠️ PIÈGE — POURQUOI .form-control EST DANS LE SÉLECTEUR. Cet input est un <Form.Control>,
+   donc react-bootstrap lui ajoute la classe form-control : il porte en réalité
+   « form-control btn-secondary search-input ». Il est donc AUSSI matché par la règle générique
+   input.btn-secondary.form-control, écrite plus BAS dans cette même section. Sans .form-control
+   ici, les deux sélecteurs pesaient exactement le même poids (0,2,1) et, à égalité, c'est le
+   DERNIER écrit qui gagne → la règle générique reprenait la main et rétablissait
+   --custom-darker. Le bug était invisible tant que les deux posaient la même couleur.
+   Avec .form-control, on passe à (0,3,1) → ce bloc gagne pour de bon. NE PAS le retirer. */
+input.search-input.btn-secondary.form-control,
+input.search-input.btn-secondary.form-control:hover {
+  background-color: var(--custom-dark) !important;
+  border: 1px solid transparent !important;
+  box-shadow: none !important;
+  color: #f5f8fa;
+}
+
+/* .form-control ici aussi, par cohérence avec le bloc ci-dessus : sans lui ce sélecteur pèse
+   le même poids que le input.btn-secondary.form-control:focus générique plus bas et perdrait
+   à égalité. Les deux posent aujourd'hui le même focus rose, donc rien de visible — mais le
+   jour où l'un des deux change, la divergence serait silencieuse. */
+input.search-input.btn-secondary.form-control:focus {
+  border: 1px solid var(--custom-pink) !important;
+  box-shadow: var(--pink-focus) !important;
+}
+
+/* Même bug, autres champs : la zone de choix des filtres (sélecteur de critère)
+   contient plein de champs texte marqués .btn-secondary.form-control (dans un
+   .form-group). Comme .search-input ci-dessus, ils héritent du look/comportement
+   d'un BOUTON secondaire (fond gris, glow gris au survol). On les force à se
+   comporter comme des champs texte : fond sombre, pas de glow au survol, bordure
+   transparente au repos, bordure rose + halo au focus — comme partout ailleurs.
+   Le couple .btn-secondary + .form-control identifie précisément ces inputs
+   (un vrai bouton ne porte pas .form-control). */
+input.btn-secondary.form-control,
+input.btn-secondary.form-control:hover {
+  background-color: var(--custom-darker) !important;
+  border: 1px solid transparent !important;
+  box-shadow: none !important;
+  color: #f5f8fa;
+}
+
+input.btn-secondary.form-control:focus {
+  border: 1px solid var(--custom-pink) !important;
+  box-shadow: var(--pink-focus) !important;
+}
+
+/* CONTRASTE dans les CRITÈRES du menu « Edit Filter » (pop-up ouverte depuis la barre de
+   filtre). Chaque critère dépliable (Stash ID, oshash, Performer Count, Path, Phash, Timestamp,
+   Date, Duration, Custom Fields…) est rendu dans une CARTE d'accordéon — cf. Stash
+   List/styles.scss « .edit-filter-dialog .criterion-list .card ». Or notre thème met .card à
+   --custom-darker (§6), exactement la couleur que les règles génériques ci-dessus donnent aux
+   champs → le champ se fondait dans sa carte, invisible.
+
+   CORRECTIF : on remonte la CARTE à --custom-dark, la couleur du corps de modale (§10), au lieu
+   de descendre les champs. Deux bénéfices par rapport à l'inverse :
+   • l'item dépliable se lit comme un prolongement du fond de la modale, donc COHÉRENT avec le
+     reste du site, là où une carte plus sombre créait un bloc étranger ;
+   • les champs redeviennent contrastés SANS règle dédiée : ils gardent le --custom-darker des
+     règles génériques (§4), comme TOUS les champs du site. Le couple « champ sombre sur fond
+     clair » redevient identique partout — une exception en moins à maintenir.
+   C'est pourquoi il n'y a plus ici de surcharge sur les champs eux-mêmes : elle serait
+   redondante, et deux règles qui se compensent finissent toujours par diverger.
+
+   L'en-tête de l'accordéon suit automatiquement : Stash lui met $card-cap-bg = rgba(#000,.03),
+   un noir TRANSLUCIDE posé par-dessus le fond de la carte → il reste un cran plus sombre que
+   son corps, quel que soit le fond qu'on choisit. Rien à régler de ce côté.
+
+   SCOPE : .criterion-list, la liste des critères. Les .card d'autres modales ne sont pas
+   touchées. SPÉCIFICITÉ (0,3,0) > .card (0,1,0) → aucun !important nécessaire. */
+.edit-filter-dialog .criterion-list .card {
+  background-color: var(--custom-dark);
+}
+
+/* En-têtes des accordéons du menu « Edit Filter » (pop-up ; boutons .filter-item-header,
+   composant Accordion.Toggle = un chevron .collapse-icon + le libellé — ex. Audio Codec,
+   Bit Rate, Caption, Studios…). Deux choses :
+   1. FOCUS : au clic, Bootstrap affiche un cadre/halo BLEU de focus (border-color $primary +
+      box-shadow inset bleu) qui persiste tant qu'on ne clique pas ailleurs. On le NEUTRALISE
+      complètement — plus AUCUNE bordure colorée. On avait ici un SOULIGNEMENT ROSE (border-color
+      rose au focus) : RETIRÉ à la demande. La bordure basse redevient la fine ligne sombre du
+      repos (rgba 0.125, la valeur Stash du .filter-item-header), donc aucun changement visible au
+      focus.
+   2. SURVOL : à la place, le même effet que les autres en-têtes d'accordéon du thème
+      (custom-fields, scrape-dialog…) → GLOW BLANC sur le texte (text-shadow) ET le chevron
+      (filter sur le SVG). On scope le chevron à .collapse-icon pour NE PAS illuminer la punaise
+      (.pin-criterion-button) ni la croix rouge (.remove-criterion-button), qui ont leur propre
+      traitement (§13). Rien d'autre — aucun rose, aucun fond. */
+.filter-item-header:focus,
+.filter-item-header.focus {
+  outline: none;
+  border-color: rgba(0, 0, 0, 0.125) !important;
+  box-shadow: none !important;
+}
+
+/* Survol : glow blanc sur le libellé + le chevron (mêmes variables --text-glow-white /
+   --icon-glow-white que les autres en-têtes d'accordéon). */
+.filter-item-header:hover {
+  text-shadow: var(--text-glow-white);
+}
+
+.filter-item-header:hover .collapse-icon {
+  filter: var(--icon-glow-white);
+}
+
+/* Champs react-select (performer, tag, galerie, studio, groupe…). Stash leur pose une
+   bordure visible (border-color: $secondary #394b59), que n'ont PAS les champs texte
+   simples (titre, date, URL…). Pour l'uniformité, on la rend TRANSPARENTE au repos ET au
+   survol (react-select réapplique une bordure en :hover via ses styles internes). La
+   largeur 1px reste réservée → aucun décalage quand la bordure rose apparaît au focus,
+   gérée par .react-select__control--is-focused ci-dessous (!important → gagne même au
+   survol du champ focus). */
+div.react-select__control,
+div.react-select__control:hover {
+  background-color: var(--custom-darker);
+  border-color: transparent;
+}
+
+/* Au focus, react-select garde son liseré/halo BLEU par défaut. On le remplace par
+   le même halo rose que les autres champs texte, pour l'uniformité. */
+.react-select__control--is-focused {
+  border-color: var(--custom-pink) !important;
+  box-shadow: var(--pink-focus) !important;
+}
+
+div.react-select__menu {
+  background-color: var(--custom-darker);
+}
+
+/* Option SÉLECTIONNÉE (au repos, non survolée) d'un menu react-select — ex. le menu
+   déroulant du TAG PRIMAIRE d'un marqueur (formulaire de marqueur / sous-menu Marqueurs
+   d'une scène). react-select colore l'option courante avec son bleu $primary par défaut ;
+   Stash n'override QUE l'option survolée (--is-focused, en gris #8a9ba826). Ce bleu
+   restait donc visible sur l'élément sélectionné tant qu'on ne le survolait pas. On le
+   remplace par le gris clair du thème (--custom-dark), qui ressort en léger surlignage sur
+   le fond plus sombre du menu (--custom-darker). Le :not(--is-focused) laisse le survol
+   reprendre la main (gris de hover de Stash) → seul l'état « sélectionné au repos » change. */
+.react-select__option--is-selected:not(.react-select__option--is-focused) {
+  background-color: var(--custom-dark) !important;
+}
+
+/* Fond des items MULTI-VALUE de react-select (les pilules des valeurs sélectionnées : performers,
+   tags… dans l'édition d'une scène). Stash les met à $muted-gray → on les passe au gris du thème
+   (--custom-gray). Ce fond couvre À LA FOIS le LABEL (nom) et la zone de la croix : leurs fonds
+   propres sont transparents, donc ils héritent de celui-ci. La croix, elle, garde son comportement
+   (son fond ne change pas — il reste ce gris — et elle s'illumine en rouge au survol ; bloc
+   suivant). Même spécificité que le SCSS Stash (div.react-select__control … = 0,2,1), chargé après
+   → gagne sans !important. */
+div.react-select__control .react-select__multi-value {
+  background-color: var(--custom-gray);
+}
+
+/* Texte du label (nom) en BLANC : react-select le rend en sombre par défaut → illisible sur le
+   gris. Spécificité (0,2,1) > la couleur par défaut de react-select → gagne sans !important. */
+div.react-select__control .react-select__multi-value__label {
+  color: #f5f8fa;
+}
+
+/* Disambiguation d'un performer (ex. « (US) » après le nom) : Stash lui met color: initial →
+   NOIR, illisible sur fond sombre. On l'aligne sur le nom (blanc). Deux contextes, MÊME cause
+   (règle Stash en 0,2,0) et MÊME correctif — même spécificité (0,2,0), chargé après → gagne sans
+   !important :
+   • .performer-select-value  → pilule react-select (édition de scène…) ;
+   • .performer-tag-container  → popover des performers au survol de la petite icône « personne »
+     sur une CARTE (scène / image / galerie…) — Scenes/styles.scss « .performer-tag-container
+     .performer-disambiguation { color: initial } ». */
+.performer-select-value .performer-disambiguation,
+.performer-tag-container .performer-disambiguation {
+  color: #f5f8fa;
+}
+
+/* Croix de suppression d'une valeur react-select (multi-select, ex. tags/performers
+   dans l'édition de scène). Au survol, react-select met un fond coloré + une croix
+   rouge : on SUPPRIME le fond (→ la croix laisse voir le gris de la pilule, inchangé), et
+   on garde la croix rouge qui BRILLE en rouge, comme toutes les autres croix du thème. */
+.react-select__multi-value__remove {
+  transition: filter var(--t), color var(--t);
+}
+
+.react-select__multi-value__remove:hover {
+  background-color: transparent !important;
+  color: #db3737 !important;
+}
+
+.react-select__multi-value__remove:hover svg {
+  filter: var(--icon-glow-red);
+}
+
+/* Date pickers (partout : édition de scène, édition en masse, historique…). Le champ
+   de saisie de la date (.date-input) est collé au bouton calendrier dans un input-group,
+   si bien que sa bordure + halo rose au focus étaient rognés à droite par le bouton.
+   On ajoute un petit espace entre le champ et le bouton, et on remonte le champ au-
+   dessus au focus (z-index) pour que la bordure rose s'affiche entièrement. */
+.date-input-group .input-group-append,
+.bulk-update-date-input .input-group-append {
+  margin-left: 5px;
+}
+
+.date-input-group .date-input:focus,
+.bulk-update-date-input .date-input:focus {
+  position: relative;
+  z-index: 3;
+}
+
+/* -----------------------------------------------------------------------------
+   5. BOUTONS
+   -------------------------------------------------------------------------- */
+.btn {
+  transition: background-color var(--t), border-color var(--t), box-shadow var(--t),
+    color var(--t);
+}
+
+/* Désactivés */
+.btn:disabled,
+.btn:disabled:hover {
+  cursor: not-allowed;
+  opacity: 0.25;
+  box-shadow: none !important;
+}
+
+/* Cadre / halo de focus bleu de Bootstrap, pour TOUS les boutons. Il apparaît
+   pendant le clic (état :active) et persiste ensuite (bouton encore :focus, une
+   fois la souris partie), jusqu'au prochain clic ailleurs. On le supprime partout.
+   Les glows de survol passent par :hover : le :not(:hover) les épargne, et pendant
+   le clic (:active) le glow réapparaît dès qu'on relâche. */
+.btn:focus:not(:hover),
+.btn.focus:not(:hover),
+.btn:not(:disabled):not(.disabled):active,
+.btn:not(:disabled):not(.disabled):active:focus {
+  box-shadow: none !important;
+  outline: none;
+}
+
+/* Bouton primaire (rose, glow discret uniquement au survol) */
+.btn-primary:not(.minimal) {
+  background-color: var(--custom-pink);
+  border-color: var(--custom-pink);
+}
+
+.btn-primary:not(.minimal):hover {
+  background-color: var(--custom-pink);
+  border-color: var(--custom-pink);
+  box-shadow: var(--pink-glow);
+}
+
+.btn-primary.disabled,
+.btn-primary:disabled {
+  background-color: var(--custom-pink);
+  border-color: var(--custom-pink);
+}
+
+/* Fond rose : au survol pour les boutons PLEINS uniquement (.minimal exclus, voir
+   la règle suivante), et dans l'état actif / cliqué (:active, .active) pour tous —
+   c'est l'état « sélectionné » : texte blanc sur fond rose.
+   On force AUSSI la bordure rose : pendant le clic MAINTENU (:active), Bootstrap remet
+   sinon une bordure BLEU foncé sur .btn-primary:active (plus spécifique 0,4,0 que notre
+   bordure rose de survol 0,3,0) → le fameux « encadré bleu ». Notre sélecteur ici est en
+   0,5,0 → il gagne. */
+.btn-primary:not(.minimal):not(:disabled):not(.disabled):not(.brand-link):hover,
+.btn-primary:not(:disabled):not(.disabled):not(.brand-link):active,
+.btn-primary:not(:disabled):not(.disabled):not(.brand-link).active,
+.show > .btn-primary.dropdown-toggle {
+  background-color: var(--custom-pink);
+  border-color: var(--custom-pink);
+}
+
+/* Boutons-icônes / menus (.minimal) : menu principal du header, icônes
+   tag/performer/marqueur des cartes, etc. Au survol, on colore SEULEMENT le texte
+   et l'icône en rose, sans remplir le fond (façon lien). On exclut .active et
+   :active pour que l'état sélectionné / cliqué garde fond rose + texte blanc. */
+.btn-primary.minimal:not(:disabled):not(.disabled):not(.brand-link):hover:not(.active):not(:active) {
+  color: var(--custom-pink);
+  background-color: transparent;
+}
+
+/* Corrige le halo bleu Bootstrap qui persiste APRÈS un clic (état :focus) sur les
+   boutons de la navbar. On garde le rose, comme au survol. Le :not(:hover) laisse
+   le survol (et son glow) reprendre la main.
+   NB : ces règles de remplissage rose ne s'appliquent PAS aux boutons utilitaires
+   du header, traités à part juste en dessous. */
+.btn-primary:not(:disabled):not(.disabled):not(.brand-link):focus:not(:hover),
+.btn-primary:not(:disabled):not(.disabled):not(.brand-link).focus:not(:hover) {
+  background-color: var(--custom-pink);
+  border-color: var(--custom-pink);
+  box-shadow: none;
+}
+
+/* --- Menu du header (menu principal : scène, image, groupe, marqueur, galerie,
+   performer, studio, tag ; ET boutons utilitaires : donation, stats, settings, help).
+   Même comportement que les onglets d'une scène :
+   • repos    : texte blanc, pas de soulignement, pas de fond
+   • survol   : soulignement rose (texte blanc conservé)
+   • actif    : soulignement rose + texte rose + fond légèrement foncé
+   Cible : boutons .minimal du .top-nav, hors logo (.brand-link).
+   Le !important neutralise les règles de remplissage rose de la section 5. --- */
+
+/* Repos : soulignement transparent (→ transition survol sans flash blanc) + pas de
+   fond ni de halo. */
+.top-nav .btn.minimal:not(.brand-link) {
+  border-bottom: 2px solid transparent !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+  transition: color var(--t), border-color var(--t), background-color var(--t);
+}
+
+/* Survol : soulignement rose, texte blanc conservé */
+.top-nav .btn.minimal:not(.brand-link):hover {
+  color: #f5f8fa !important;
+  border-bottom-color: var(--custom-pink) !important;
+}
+
+/* Actif / section courante : soulignement rose + texte rose (SANS fond — on a retiré
+   l'ancien fond #202b33, jugé incohérent avec le reste du site).
+   .active est porté par le BOUTON (menu principal, via LinkContainer) ou par le LIEN
+   parent .nav-utility (stats / settings, via NavLink). */
+.top-nav .btn.minimal.active:not(.brand-link),
+.top-nav .nav-utility.active .btn.minimal {
+  color: var(--custom-pink) !important;
+  border-bottom-color: var(--custom-pink) !important;
+}
+
+/* --- Roue crantée (Settings) du header : « battement de cœur » pendant les tâches.
+   Quand une génération est en cours, Stash fait tourner l'icône : le SVG reçoit la
+   classe .fa-spin. On s'appuie dessus (via :has) pour agir AUTOMATIQUEMENT, sans
+   survol. Dans cet état :
+   • l'icône passe au rose ;
+   • le bouton reçoit le halo rose des boutons primaires, qui PULSE façon battement
+     de cœur (deux pics rapprochés « lub-dub » puis repos).
+   Le halo suit la FORME de la roue (et non le rectangle du bouton) : on passe par
+   filter: drop-shadow() plutôt que box-shadow — comme le glow du cœur favori.
+   Il est posé sur le SVG lui-même : drop-shadow épouse la partie OPAQUE de l'élément,
+   donc la roue — même quand le bouton reçoit un fond opaque (état actif / page
+   Settings courante), cas où un filter posé sur le bouton retomberait sur le
+   rectangle. On n'anime PAS le SVG (ce serait écraser la rotation fa-spin) : on anime
+   la variable de flou --gh sur le BOUTON, rendue héritable (@property inherits:true),
+   et le SVG la lit pour son drop-shadow. Le pouls vient de --gh, la rotation reste. */
+@property --gh {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 0px;
+}
+
+.top-nav .btn.minimal:has(svg.fa-spin),
+.top-nav .btn.minimal:has(svg.fa-spin):hover {
+  color: var(--custom-pink) !important;
+  animation: gear-heartbeat 1.5s ease-in-out infinite;
+}
+
+.top-nav .btn.minimal:has(svg.fa-spin) svg {
+  filter: drop-shadow(0 0 2px color-mix(in srgb, var(--custom-pink) 92%, transparent))
+    drop-shadow(0 0 var(--gh) color-mix(in srgb, var(--custom-pink) 60%, transparent));
+}
+
+@keyframes gear-heartbeat {
+  0%, 45%, 100% { --gh: 2px; } /* repos : halo léger, toujours visible */
+  9%            { --gh: 7px; } /* « lub » */
+  18%           { --gh: 2px; }
+  27%           { --gh: 7px; } /* « dub » */
+}
+
+/* --- Roue crantée d'un JOB EN COURS dans la file d'attente (Settings ▸ Tasks ▸ Task Queue).
+   On REPREND À L'IDENTIQUE le look de la roue du header ci-dessus : rose + battement de cœur.
+   Même mécanique, et on réutilise les mêmes @property --gh / @keyframes gear-heartbeat définis
+   juste au-dessus :
+   • le SVG (Icon faCog.fa-spin) passe au ROSE, au lieu du vert $success de Stash ;
+   • le halo PULSE via drop-shadow sur le SVG, piloté par --gh (épouse la forme de la roue) ;
+   • on N'ANIME PAS le SVG (sa rotation fa-spin doit rester) : gear-heartbeat tourne sur un
+     conteneur parent (.job-description), qui ne fait qu'animer la variable --gh héritée.
+   Détection via :has(svg.fa-spin) → uniquement quand une tâche tourne, comme dans le header.
+   TAILLE INCHANGÉE : on ne touche ni font-size ni dimensions → la roue garde sa taille d'origine
+   dans la liste. Spécificité (0,4,2) > le vert de Stash .job-table.card .running .fa-icon (0,4,0)
+   → gagne sans !important. */
+.job-table .job:has(svg.fa-spin) .job-description {
+  animation: gear-heartbeat 1.5s ease-in-out infinite;
+}
+
+.job-table .job:has(svg.fa-spin) svg.fa-spin {
+  color: var(--custom-pink);
+  filter: drop-shadow(0 0 2px color-mix(in srgb, var(--custom-pink) 92%, transparent))
+    drop-shadow(0 0 var(--gh) color-mix(in srgb, var(--custom-pink) 60%, transparent));
+}
+
+/* --- Petits boutons de compteur des cartes (tag, performer, marqueur, scène…), regroupés dans
+   .card-popovers. CHANGEMENT : au lieu du soulignement rose « onglet », on veut le même effet que
+   les icônes de la barre de filtre → l'icône ET le compteur BRILLENT EN BLANC au survol, rien
+   d'autre (aucun rose, aucun soulignement).
+   • repos  : texte blanc, pas de fond ;
+   • survol : glow BLANC — text-shadow (--text-glow-white) sur le compteur + drop-shadow
+     (--icon-glow-white) sur l'icône SVG ;
+   • actif  : reste blanc (on neutralise tout rose hérité), sans glow persistant.
+   NB : .card-popovers a été RETIRÉ des listes du halo de soulignement rose (section 7 bis), sinon
+   un liseré rose brillerait encore en bas au survol. Plus aucune bordure ici (le soulignement rose
+   ayant disparu, la bordure basse transparente qui réservait sa place n'a plus lieu d'être). --- */
+.card-popovers .btn {
+  background-color: transparent !important;
+  box-shadow: none !important;
+  transition: color var(--t), text-shadow var(--t);
+}
+
+.card-popovers .btn:hover {
+  color: #f5f8fa !important;
+  text-shadow: var(--text-glow-white);
+}
+
+.card-popovers .btn svg {
+  transition: filter var(--t);
+}
+
+.card-popovers .btn:hover svg {
+  filter: var(--icon-glow-white);
+}
+
+.card-popovers .btn.active {
+  color: #f5f8fa !important;
+}
+
+/* --- Petits boutons des barres d'outils de DÉTAIL : Play Count, O Count, Organized
+   et le menu Operations (⋮). Présents sur scène / image / galerie (et pages voisines).
+   Ce sont des .btn.btn-secondary.minimal. CHANGEMENT : au lieu du soulignement rose au
+   survol, ils BRILLENT EN BLANC (icône + valeur), comme les compteurs des cartes :
+   • repos  : icône/valeur blanches, pas de fond, pas de halo ;
+   • survol : glow BLANC — text-shadow (--text-glow-white) sur la valeur + drop-shadow
+     (--icon-glow-white) sur l'icône SVG. Aucun rose, aucun soulignement, aucun effet au clic.
+   Plus de bordure basse ici : le soulignement rose ayant disparu, la bordure transparente qui
+   réservait sa place n'a plus lieu d'être. Le bouton Organized garde son INDICATEUR d'état
+   (rose quand « organisé », blanc sinon) — c'est un état, pas un survol.
+   NB : ces sélecteurs ont été RETIRÉS des listes du halo de soulignement rose (section 7 bis).
+   NB : le O Count existe en deux composants selon la page — .count-button (scène, compteur
+   partagé) et .o-counter (image, galerie : bouton + caret décrément/reset). On couvre les deux. --- */
+.count-button .btn,
+.o-counter .btn,
+.organized-button,
+#operation-menu,
+.history-operations-dropdown .dropdown-toggle,
+[id^="stash-menu-"] {
+  color: #f5f8fa !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+  transition: color var(--t), text-shadow var(--t), background-color var(--t);
+}
+
+.count-button .btn svg,
+.o-counter .btn svg,
+.organized-button svg,
+#operation-menu svg,
+.history-operations-dropdown .dropdown-toggle svg,
+[id^="stash-menu-"] svg {
+  transition: filter var(--t);
+}
+
+/* Le compteur est un GROUPE (ButtonGroup) dont le SCSS colore le FOND au survol
+   (.count-button:hover { background: rgba(138,155,168,.15) }). La règle ci-dessus ne
+   vise que les boutons internes ; on neutralise ici le fond du conteneur lui-même. */
+.count-button,
+.count-button:hover,
+.o-counter,
+.o-counter:hover {
+  background-color: transparent !important;
+}
+
+/* Survol : glow BLANC (au lieu du soulignement rose). text-shadow pour la valeur, drop-shadow
+   pour l'icône. Pour les compteurs (icône + valeur accolées), on glow tout le groupe via
+   :hover sur le conteneur. */
+.count-button:hover .btn,
+.o-counter:hover .btn,
+.organized-button:hover,
+#operation-menu:hover,
+.history-operations-dropdown .dropdown-toggle:hover,
+[id^="stash-menu-"]:hover {
+  text-shadow: var(--text-glow-white);
+}
+
+.count-button:hover .btn svg,
+.o-counter:hover .btn svg,
+.organized-button:hover svg,
+#operation-menu:hover svg,
+.history-operations-dropdown .dropdown-toggle:hover svg,
+[id^="stash-menu-"]:hover svg {
+  filter: var(--icon-glow-white);
+}
+
+/* Organized « activé » : l'icône en rose (INDICATEUR d'état, pas un survol). */
+.organized-button.organized {
+  color: var(--custom-pink) !important;
+}
+
+/* Quand elle est « organisée » (icône rose), le survol glow en ROSE au lieu du blanc commun →
+   le halo suit la couleur de l'état. Non organisée (blanche) → survol blanc via la règle commune.
+   Sélecteur (0,3,x) plus spécifique que le survol blanc commun (0,2,x) → gagne. */
+.organized-button.organized:hover {
+  text-shadow: var(--text-glow-pink);
+}
+
+.organized-button.organized:hover svg {
+  filter: var(--icon-glow-pink);
+}
+
+/* Bouton secondaire (gris) */
+.btn-secondary:not(.minimal) {
+  background-color: var(--custom-gray);
+  border-color: var(--custom-gray);
+}
+
+.btn-secondary:not(.minimal):hover {
+  background-color: var(--custom-gray);
+  border-color: var(--custom-gray);
+  box-shadow: var(--gray-glow);
+}
+
+/* État actif / cliqué (:active, .active, dropdown ouvert) : sans ça, Bootstrap remet un fond
+   ET une bordure BLEU FONCÉ (darken($secondary)) sur .btn-secondary:active → couleur hors
+   thème visible pendant le clic maintenu. On garde le gris. Sélecteur en 0,5,0 → bat le 0,4,0
+   de Bootstrap sans !important. (Le box-shadow est déjà neutralisé par .btn:active en §5.) */
+.btn-secondary:not(.minimal):not(:disabled):not(.disabled):active,
+.btn-secondary:not(.minimal):not(:disabled):not(.disabled).active,
+.show > .btn-secondary.dropdown-toggle {
+  background-color: var(--custom-gray);
+  border-color: var(--custom-gray);
+}
+
+/* Danger / succès : glow coloré au survol */
+.btn-danger:hover {
+  box-shadow: var(--danger-glow);
+  opacity: 1;
+}
+
+.btn-success:hover {
+  box-shadow: var(--success-glow);
+  opacity: 1;
+}
+
+/* Boutons de MODE des éditions de masse : Overwrite / Add / Remove
+   (MultiSetModeButtons → .btn-primary.btn-sm, avec .active sur le mode choisi, dans
+   .button-group-above). Ce sont des boutons primaires, mais on veut le comportement
+   « onglet » comme partout ailleurs :
+   • repos  : texte blanc, pas de fond, pas de bordure ;
+   • survol : soulignement rose (qui brille — cf. section 7 bis) ;
+   • choisi (.active) : texte rose + soulignement rose persistant.
+   IMPORTANT : tout est scopé à .button-group-above et le !important neutralise
+   LOCALEMENT les règles de remplissage rose des .btn-primary de la section 5 — donc
+   AUCUN impact sur les autres boutons du site (c'était le piège des essais précédents,
+   qui touchaient .btn-primary globalement). */
+.button-group-above .btn {
+  color: #f5f8fa !important;
+  background-color: transparent !important;
+  border-color: transparent !important;
+  border-bottom: 2px solid transparent !important;
+  box-shadow: none !important;
+  transition: color var(--t), border-color var(--t);
+}
+
+.button-group-above .btn:not(:disabled):not(.disabled):hover {
+  color: #f5f8fa !important;
+  border-bottom-color: var(--custom-pink) !important;
+}
+
+.button-group-above .btn.active {
+  color: var(--custom-pink) !important;
+  border-bottom-color: var(--custom-pink) !important;
+}
+
+/* Pilules « modificateur » de la barre / menu Edit Filter (is greater than, between…).
+   PIÈGE : elles portent l'attribut .btn-primary mais NE sont PAS de vrais boutons primaires →
+   on les traite LOCALEMENT, scopé à .modifier-option, sans toucher aux autres .btn-primary du
+   site (le !important bat les règles roses de la section 5, plus spécifiques). Stash leur met un
+   fond bleu-gris et, sur la sélectionnée, un fond BLEU ($primary #137cbd). Comportement voulu :
+   • non sélectionnée : fond gris, texte blanc (inchangé) ;
+   • survol           : texte ROSE qui BRILLE (text-shadow rose) — PLUS de soulignement/bordure
+     rose ni de halo ;
+   • sélectionnée (.selected) : texte ROSE fixe, SANS brillance et sans soulignement.
+   Fond gris forcé dans tous les états + box-shadow none → plus aucun bleu. La bordure basse
+   transparente reste (espace réservé → aucun saut de layout).
+   NB : .modifier-option.btn a été RETIRÉ des listes du halo de soulignement rose (§7 bis),
+   sinon un liseré rose brillerait encore en bas au survol. */
+.modifier-option.btn {
+  background-color: var(--custom-gray) !important;
+  color: #f5f8fa !important;
+  border-bottom: 2px solid transparent !important;
+  box-shadow: none !important;
+}
+
+.modifier-option.btn:hover {
+  color: var(--custom-pink) !important;
+  text-shadow: var(--text-glow-pink);
+}
+
+.modifier-option.btn.selected {
+  color: var(--custom-pink) !important;
+}
+
+/* --- Menu « Scrape with… » (ScraperMenu — onglet Edit d'une scène ET partout ailleurs :
+   performer, image, galerie ; composant mutualisé). Trois boutons rendus sous .scraper-menu
+   étaient ROSES car .btn-primary (les deux Dropdown.Toggle « Scrape with… » sans variant +
+   la loupe est .btn-secondary ; le bouton ⟳ « recharger » sans variant). On les passe tous
+   au GRIS plein du thème (--custom-gray), dans TOUS les états — y compris menu OUVERT
+   (.show), où la section 5 (.show > .btn-primary.dropdown-toggle) et :focus/:active après
+   clic remettaient du rose. Scopé à .scraper-menu → aucun impact ailleurs ; le !important
+   bat LOCALEMENT les règles roses des .btn-primary de la section 5. */
+.scraper-menu .dropdown-toggle,
+.scraper-menu .dropdown-toggle:hover,
+.scraper-menu .dropdown-toggle:focus,
+.scraper-menu .dropdown-toggle:active,
+.scraper-menu.show > .dropdown-toggle,
+.scraper-menu .reload-button,
+.scraper-menu .reload-button:hover,
+.scraper-menu .reload-button:focus,
+.scraper-menu .reload-button:active {
+  background-color: var(--custom-gray) !important;
+  border-color: var(--custom-gray) !important;
+}
+
+/* Halo GRIS au survol (--gray-glow, la variable EXISTANTE des .btn-secondary) pour les
+   trois boutons. Ne brille qu'au survol : hors survol, .btn:focus:not(:hover) (section 5)
+   remet box-shadow:none (menu ouvert, souris partie → plus de halo). */
+.scraper-menu .dropdown-toggle:hover,
+.scraper-menu .reload-button:hover {
+  box-shadow: var(--gray-glow) !important;
+}
+
+/* Menu déroulé : la barre du champ « Filter… » (.scraper-filter-container) avait un fond
+   $secondary (#394b59, bleu-gris de l'ancien thème Blueprint) — LE bleu qui traînait. On
+   le repasse au gris du thème. Même spécificité que le SCSS d'origine → gagne sans
+   !important (CSS chargé en dernier). Fond du menu + item actif : déjà gérés en section 8. */
+.scraper-menu .dropdown-menu .scraper-filter-container {
+  background-color: var(--custom-darker);
+  border-bottom-color: var(--custom-dark);
+}
+
+/* --- En-tête de l'accordéon « Custom Fields » (composant partagé Shared/CustomFields →
+   CollapseButton) : page d'édition/création d'un PERFORMER, d'un STUDIO, et partout où ce
+   composant sert. PIÈGE : son en-tête est un <Button> react-bootstrap SANS variant → donc
+   variant="primary" par défaut → classes .btn.btn-primary.minimal.collapse-button. Il héritait
+   ainsi du survol ROSE des .btn-primary.minimal (section 5), avec aussi un rose persistant au
+   clic/actif (focus/active).
+   DEUX composants partagent ce même en-tête (via le composant CollapseButton) :
+   • .custom-fields       → version LECTURE SEULE (panneau détails d'un performer/studio…) ;
+   • .custom-fields-input → version ÉDITION (formulaire de création/modif) — c'est celle-ci qui
+     s'affiche ROSE PLEIN sur ta capture. On cible LES DEUX.
+   COMPORTEMENT VOULU : texte BLANC au repos, et au survol UNIQUEMENT un GLOW BLANC (texte +
+   chevron). Rien d'autre — aucun rose, aucun fond, aucun effet au clic ni à l'ouverture.
+   SCOPING STRICT (règle d'or §8) : ciblé via les conteneurs .custom-fields / .custom-fields-input
+   → n'affecte AUCUN autre .btn-primary du site. Le !important est INDISPENSABLE : les règles
+   roses de la section 5 sont plus spécifiques (jusqu'à ~0,8,0) que ces sélecteurs (0,3,0). --- */
+.custom-fields .collapse-button,
+.custom-fields .collapse-button:hover,
+.custom-fields .collapse-button:focus,
+.custom-fields .collapse-button:active,
+.custom-fields .collapse-button.active,
+.custom-fields-input .collapse-button,
+.custom-fields-input .collapse-button:hover,
+.custom-fields-input .collapse-button:focus,
+.custom-fields-input .collapse-button:active,
+.custom-fields-input .collapse-button.active {
+  color: #f5f8fa !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Survol : le glow blanc, et lui seul. text-shadow pour le libellé, drop-shadow (filter) pour
+   le chevron SVG — mêmes flous/opacités (--text-glow-white / --icon-glow-white). */
+.custom-fields .collapse-button:hover,
+.custom-fields-input .collapse-button:hover {
+  text-shadow: var(--text-glow-white);
+}
+
+.custom-fields .collapse-button:hover svg,
+.custom-fields-input .collapse-button:hover svg {
+  filter: var(--icon-glow-white);
+}
+
+/* MÊME PIÈGE que Custom Fields, dans DEUX autres contextes où le composant partagé CollapseButton
+   (.btn.btn-primary.minimal.collapse-button → rose au survol/clic) n'était couvert par aucun
+   conteneur déjà traité (.custom-fields, .sidebar, .tagger-container) :
+   • .scrape-dialog  → en-tête « Missing (N) » des fenêtres de RÉSULTATS DU SCRAPER (composant
+     ScrapedObjectsRow), scène / performer / etc. ;
+   • .setting .collapse-button → accordéons des RÉGLAGES (ex. Settings ▸ Plugins : « Triggers on »
+     des hooks, réglages/description d'un plugin). .setting est la classe des lignes de réglages
+     → ne touche PAS le .setting-group-collapse-button des accordéons de GROUPE (classe différente,
+     traité en gris §13).
+   Même traitement « icône blanche » : blanc au repos, glow BLANC au survol (texte + chevron), rien
+   d'autre. Scopé à ces conteneurs → n'affecte aucun autre .btn-primary. */
+.scrape-dialog .collapse-button,
+.scrape-dialog .collapse-button:hover,
+.scrape-dialog .collapse-button:focus,
+.scrape-dialog .collapse-button:active,
+.scrape-dialog .collapse-button.active,
+.setting .collapse-button,
+.setting .collapse-button:hover,
+.setting .collapse-button:focus,
+.setting .collapse-button:active,
+.setting .collapse-button.active {
+  color: #f5f8fa !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
+
+.scrape-dialog .collapse-button:hover,
+.setting .collapse-button:hover {
+  text-shadow: var(--text-glow-white);
+}
+
+.scrape-dialog .collapse-button:hover svg,
+.setting .collapse-button:hover svg {
+  filter: var(--icon-glow-white);
+}
+
+/* En-têtes d'accordéon de la section Changelog (Settings ▸ Changelog ; composant Version →
+   <Button variant="link"> dans .changelog-version-header, avec un chevron .mr-3 + le n° de
+   version). Même traitement « glow blanc » que les autres en-têtes d'accordéon. DEUX PIÈGES
+   propres au .btn-link, à neutraliser :
+   • SOULIGNEMENT du texte au survol : le thème le retire déjà pour tous les .btn-link
+     (§2, .btn-link:hover text-decoration none), MAIS Stash le REMET spécifiquement ici via
+     .changelog .btn:hover (plus spécifique) → il faut le rebattre en !important, scopé.
+   • CADRE BLEU de focus (outline/box-shadow du navigateur + Bootstrap au clic) → outline none +
+     box-shadow none.
+   Le glow blanc du texte n'était PAS appliqué : la règle de brillance des liens (§2,
+   a:hover:not(.nav-link):not(.btn)) exclut les .btn — on l'ajoute donc explicitement ici.
+   Scopé à .changelog-version-header → n'affecte aucun autre bouton. Boutons en texte + un seul
+   SVG (chevron) → filter directement sur svg. Repos INCHANGÉ (texte clair hérité de $text-color). */
+.changelog-version-header .btn,
+.changelog-version-header .btn:hover,
+.changelog-version-header .btn:focus,
+.changelog-version-header .btn:active {
+  text-decoration: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  transition: color var(--t), text-shadow var(--t);
+}
+
+.changelog-version-header .btn:hover {
+  color: #f5f8fa !important;
+  text-shadow: var(--text-glow-white);
+}
+
+.changelog-version-header .btn:hover svg {
+  filter: var(--icon-glow-white);
+}
+
+/* Accordéons de Settings ▸ Metadata Providers. DEUX sortes de boutons chevron y réagissent mal :
+   1. Section « Scrapers » (composant ScrapersSection → CollapseButton) : en-têtes Scene / Gallery
+      / Image / Performer / Group Scrapers → .btn.btn-primary.minimal.collapse-button. PIÈGE : ils
+      héritent du survol ROSE des .btn-primary.minimal (section 5) + rose persistant à l'actif/focus.
+   2. Sections « Installed / Available Scrapers » (PackageManager) : chevron d'expansion d'une SOURCE
+      = .source-collapse > <Button variant="minimal"> → .btn-minimal (PAS un vrai btn-primary, donc
+      pas de rose, mais aucun retour visuel + anneau bleu de focus au clic).
+   On uniformise comme les autres en-têtes d'accordéon : blanc au repos, GLOW BLANC (texte + chevron)
+   au survol, rien d'autre.
+   SCOPING STRICT (crainte = casser les autres .btn-primary) : tout est ciblé via l'id du Tab.Pane
+   react-bootstrap #configuration-tabs-tabpane-metadata-providers (= "{Tab.Container id}-tabpane-
+   {eventKey}", ici id="configuration-tabs" + eventKey="metadata-providers") → n'affecte QUE cette
+   page. L'id porte à lui seul la spécificité (1,x,x) → bat la section 5 même sans !important ; le
+   !important reste par cohérence. */
+#configuration-tabs-tabpane-metadata-providers .collapse-button,
+#configuration-tabs-tabpane-metadata-providers .collapse-button:hover,
+#configuration-tabs-tabpane-metadata-providers .collapse-button:focus,
+#configuration-tabs-tabpane-metadata-providers .collapse-button:active,
+#configuration-tabs-tabpane-metadata-providers .collapse-button.active,
+#configuration-tabs-tabpane-metadata-providers .source-collapse .btn,
+#configuration-tabs-tabpane-metadata-providers .source-collapse .btn:hover,
+#configuration-tabs-tabpane-metadata-providers .source-collapse .btn:focus,
+#configuration-tabs-tabpane-metadata-providers .source-collapse .btn:active {
+  color: #f5f8fa !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+#configuration-tabs-tabpane-metadata-providers .collapse-button:hover,
+#configuration-tabs-tabpane-metadata-providers .source-collapse .btn:hover {
+  text-shadow: var(--text-glow-white);
+}
+
+#configuration-tabs-tabpane-metadata-providers .collapse-button:hover svg,
+#configuration-tabs-tabpane-metadata-providers .source-collapse .btn:hover svg {
+  filter: var(--icon-glow-white);
+}
+
+/* -----------------------------------------------------------------------------
+   6. CARTES (scènes, galeries, etc.)
+   -------------------------------------------------------------------------- */
+.card {
+  background-color: var(--custom-darker);
+}
+
+/* Séparateur <hr> des cartes : trait entre la description et les compteurs
+   .card-popovers (scène, image, performer, galerie, studio, groupe, tag). On le passe
+   à l'accent du thème : un trait FIN rose.
+   L'épaisseur reste 1px (border-top par défaut de Bootstrap, non touché).
+   Pour rester DISCRET, le trait ne fait pas toute la largeur : réduit à 90 % et
+   centré (margin auto) → un tiret rose au milieu plutôt qu'une barre pleine.
+   AU REPOS : rose SIMPLE, complètement ÉTEINT — pas de box-shadow. Le halo permanent d'origine
+   saturait la grille (trente cartes = trente halos) et ne laissait aucune marge pour marquer
+   le survol. Conforme au principe §4 : le halo n'apparaît qu'au survol. */
+.card hr {
+  border-color: var(--custom-pink);
+  width: 90%;
+  margin-left: auto;
+  margin-right: auto;
+  transition: box-shadow var(--t);
+}
+
+/* AU SURVOL DE LA CARTE : le tiret s'allume — c'est le seul moment où il brille. Vient EN PLUS
+   du soulèvement de la carte (règle suivante), qui reste inchangé.
+   Le halo réutilise --pink-underline-glow, la variable EXISTANTE de la barre de soulignement
+   au survol (juste la barre, pas un cadre) → exactement le motif « le halo n'apparaît qu'au
+   survol » du principe §4, sans rien inventer.
+   Le survol est porté par la CARTE (.card:hover) et non par le <hr> lui-même : un trait de 1px
+   serait quasi impossible à pointer à la souris. */
+.card:hover hr {
+  box-shadow: var(--pink-underline-glow);
+}
+
+/* EXCEPTION — onglet « Marqueurs » d'une SCÈNE (.scene-markers-panel) : on y BLOQUE
+   complètement le séparateur rose, couleur ET brillance. Les cartes de marqueurs y sont
+   nombreuses et rapprochées : le tiret rose sur chacune faisait trop de rose (principe §2, le
+   rose est un ACCENT), et l'allumage au survol était jugé parasite dans cette vue.
+   Le <hr> passe à --custom-dark : un trait NEUTRE, dans la palette du thème. On ne le laisse
+   PAS revenir au défaut Bootstrap (rgba(0,0,0,.1), Stash ne redéfinit que sa marge — cf.
+   styles/_theme.scss) : ce noir translucide est quasi invisible sur nos fonds sombres, le
+   séparateur disparaissait purement et simplement. --custom-dark étant un cran plus CLAIR que
+   le fond de carte (--custom-darker), le trait se voit sans attirer l'œil.
+   La géométrie (largeur 90 %, centrage) est laissée intacte : seul l'accent rose disparaît.
+
+   POURQUOI UNE SURCHARGE SCOPÉE, et non un :not() ajouté à .card hr ? Un :not() sur la règle
+   de BASE l'alourdirait pour tout le site et augmenterait sa spécificité, au risque de faire
+   perdre la main aux surcharges existantes — c'est le « serpent qui se mord la queue » de la
+   règle d'or §8. Ici on ne touche PAS aux règles générales : on ajoute un bloc ciblé, chargé
+   après, qui ne s'applique qu'à ce panneau.
+   SPÉCIFICITÉ : (0,2,1) et (0,3,1) → battent respectivement .card hr (0,1,1) et .card:hover hr
+   (0,2,1). Aucun !important nécessaire.
+   PORTÉE VOLONTAIRE : scopé au PANNEAU (.scene-markers-panel), pas à la carte
+   (.scene-marker-card). Les mêmes cartes de marqueurs affichées AILLEURS — page Marqueurs
+   globale, rangée de recommandations de l'accueil — gardent donc le tiret rose. Pour étendre
+   l'exception à tous les marqueurs du site, remplacer ici .scene-markers-panel .card par
+   .scene-marker-card. */
+.scene-markers-panel .card hr,
+.scene-markers-panel .card:hover hr {
+  border-color: var(--custom-dark);
+  box-shadow: none;
+}
+
+/* Volume / relief des cartes média (scènes, images, galeries, performers, studios,
+   groupes, tags) : ombre portée neutre (noire, pas rose) pour donner de la
+   profondeur, + léger soulèvement au survol. Ciblé sur les classes de cartes média
+   pour ne pas toucher les cartes de détail / panneaux. */
+.scene-card,
+.image-card,
+.gallery-card,
+.performer-card,
+.studio-card,
+.group-card,
+.tag-card,
+.scene-marker-card {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.scene-card:hover,
+.image-card:hover,
+.gallery-card:hover,
+.performer-card:hover,
+.studio-card:hover,
+.group-card:hover,
+.tag-card:hover,
+.scene-marker-card:hover {
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.55);
+  transform: translateY(-3px);
+}
+
+/* Neutralisation de l'animation ci-dessus dans deux contextes « croisés » où elle est jugée
+   parasite : l'onglet Galerie des détails d'une SCÈNE (.scene-galleries → .gallery-card) et
+   la section Scènes des détails d'une GALERIE (.gallery-scenes → .scene-card). On rend l'état
+   survol IDENTIQUE au repos (pas de transform + même ombre que le repos) → aucun mouvement ni
+   changement d'ombre. Scopé à ces deux conteneurs → les pages LISTE gardent l'animation.
+   Sélecteur (0,3,0) plus spécifique que la règle de survol ci-dessus (0,2,0). */
+.scene-galleries .gallery-card:hover,
+.gallery-scenes .scene-card:hover {
+  transform: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+/* Même principe pour les cartes PERFORMER de la section « Performers » des vues DÉTAIL (page
+   d'une scène, d'une image, d'une galerie), où l'animation de survol est jugée parasite. On
+   rend le survol IDENTIQUE au repos (pas de transform + même ombre). Scopé aux conteneurs
+   .scene-performers / .gallery-performers / .image-performers → les pages LISTE de performers
+   (et le panneau Performers d'un groupe, en grille) gardent l'animation. */
+.scene-performers .performer-card:hover,
+.gallery-performers .performer-card:hover,
+.image-performers .performer-card:hover {
+  transform: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+/* Panneau DÉTAIL (scène / image / galerie) : garantir TOUJOURS 2 cartes performer par ligne,
+   quelle que soit la largeur du panneau (il est redimensionnable) ou le zoom. Les tentatives par
+   « largeur des cartes » étaient fragiles (cartes rognées). Approche ROBUSTE via CSS GRID : on
+   force le conteneur en grille à 2 COLONNES ÉGALES (1fr 1fr) → exactement 2 par ligne, une 3e
+   passe automatiquement dessous, SANS dépendre d'un calcul de largeur.
+   • gap 1rem + marges 0 : remplace les marges négatives du .row Bootstrap (qui déborderaient en
+     grille) par un simple écart ;
+   • cartes width:100% (remplissent la colonne), plafonnées à 15rem (taille d'origine) ;
+   • min-width:0 sur la carte ET l'image (min-width:11.25rem interne) → la colonne peut rétrécir
+     sous 15rem sans que l'image déborde ni soit rognée sur un panneau étroit.
+   Scopé à ces trois conteneurs → aucun autre affichage de cartes touché. */
+.scene-performers,
+.image-performers,
+.gallery-performers {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  justify-items: center;
+}
+
+.scene-performers .performer-card,
+.image-performers .performer-card,
+.gallery-performers .performer-card {
+  width: 100% !important;
+  max-width: 15rem !important;
+  min-width: 0 !important;
+}
+
+.scene-performers .performer-card-image,
+.image-performers .performer-card-image,
+.gallery-performers .performer-card-image {
+  min-width: 0 !important;
+}
+
+/* -----------------------------------------------------------------------------
+   7. ONGLETS & MENUS LATÉRAUX
+   -------------------------------------------------------------------------- */
+/* Onglets dans le détail d'une scène, etc. */
+.nav-tabs .nav-link {
+  /* Soulignement transparent au repos : au survol, la transition va transparent →
+     rose (au lieu de blanc → rose), donc plus de flash blanc, et pas de saut de 2px. */
+  border-bottom: 2px solid transparent;
+  transition: color var(--t), border-color var(--t);
+}
+
+.nav-tabs .nav-link.active {
+  color: var(--custom-pink);
+  /* Neutralise le fond #202b33 par défaut de Bootstrap ($body-bg) sur l'onglet actif
+     (onglets Détails / Marqueurs / Historique / Edit d'une scène, etc.). */
+  background-color: transparent;
+}
+
+.nav-tabs .nav-link:hover {
+  border-bottom: 2px solid var(--custom-pink);
+}
+
+.nav-tabs .nav-link.active:hover {
+  border-bottom-color: var(--custom-pink);
+}
+
+/* Menu latéral des Settings (Tasks, Library, Interface, Security, Metadata
+   Providers…) — nav-pills. Même effet que les onglets :
+   • survol : soulignement rose (texte inchangé)
+   • actif  : soulignement rose + texte rose + fond foncé. */
+.nav-pills .nav-link {
+  border-bottom: 2px solid transparent;
+  transition: color var(--t), border-color var(--t), background-color var(--t);
+}
+
+.nav-pills .nav-link:hover {
+  /* Texte blanc au survol (on annule le a:hover rose de la section 2) — seul le
+     soulignement passe au rose. L'item actif reste rose (règle plus spécifique). */
+  color: #f5f8fa;
+  border-bottom-color: var(--custom-pink);
+}
+
+.nav-pills .nav-link.active,
+.nav-pills .show > .nav-link {
+  color: var(--custom-pink);
+  border-bottom-color: var(--custom-pink);
+  /* transparent (et non « rien ») : sinon Bootstrap réaffiche son fond bleu $primary
+     sur l'item actif — c'est ce fond que l'ancien #202b33 masquait. */
+  background-color: transparent;
+}
+
+/* -----------------------------------------------------------------------------
+   7 bis. HALO DE LA BARRE DE SOULIGNEMENT AU SURVOL
+   -----------------------------------------------------------------------------
+   Partout où un survol fait apparaître un soulignement rose, on fait BRILLER cette
+   barre (et elle seule, pas le cadre du bouton), UNIQUEMENT au survol. Un trait qui
+   persiste pour une autre raison (onglet actif, .selected, menu déroulé, header
+   .active, souris partie après un clic) reste souligné mais NE brille PAS, car le
+   halo n'est posé qu'en :hover.
+
+   Technique : un pseudo-élément fin, plein largeur, calé sur le soulignement, dont le
+   box-shadow ne diffuse que le long de la barre. On utilise ::before (et non ::after)
+   pour ne pas écraser le caret des menus déroulants, qui est un ::after.
+   Le halo se règle en un seul endroit : --pink-underline-glow (bloc :root). */
+
+/* Ancre le pseudo-élément (position: relative posé au survol → aucun décalage). */
+.top-nav .btn.minimal:not(.brand-link):hover,
+.button-group-above .btn:hover,
+.nav-tabs .nav-link:hover,
+.nav-pills .nav-link:hover {
+  position: relative;
+}
+
+.top-nav .btn.minimal:not(.brand-link):hover::before,
+.button-group-above .btn:hover::before,
+.nav-tabs .nav-link:hover::before,
+.nav-pills .nav-link:hover::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px; /* calé sur le soulignement (bord bas) */
+  height: 1px;
+  box-shadow: var(--pink-underline-glow);
+  pointer-events: none; /* n'intercepte pas les clics */
+}
+
+/* -----------------------------------------------------------------------------
+   8. TOOLBARS, PAGINATION, DROPDOWNS, POPOVERS, BANDEAUX
+   -------------------------------------------------------------------------- */
+.filtered-list-toolbar,
+.filtered-list-toolbar .btn-secondary,
+.pagination .btn-secondary {
+  background-color: var(--custom-dark) !important;
+  border-color: var(--custom-darker) !important;
+  box-shadow: none !important;
+}
+
+/* Groupe « sélection » (.selected-items-info : ✕ désélectionner / compteur / ✓ tout
+   sélectionner) qui apparaît à gauche des opérations dès qu'un item est coché. Stash
+   l'encadre d'un border 1px $secondary (#394b59, bleu-gris de l'ancien thème), différent
+   du reste de la barre. On l'harmonise sur la même bordure que la poubelle et les autres
+   boutons de la toolbar (var(--custom-darker)). */
+.filtered-list-toolbar .selected-items-info {
+  border-color: var(--custom-darker);
+}
+
+/* Boutons-ICÔNES de la barre de filtres : petites icônes (funnel de filtre, marque-page,
+   sens de tri, aléatoire, modes d'affichage, play/edit des opérations…). Au survol → elles
+   BRILLENT en blanc (drop-shadow sur le SVG, --icon-glow-white, comme les autres icônes du
+   thème). UNIQUEMENT au survol ; aucun effet au clic (fonds/halos déjà neutralisés section 8).
+   On glow le SVG → les afficheurs SANS icône ne brillent PAS : nom/champ du filtre, éléments
+   par page (<select>), toggle de tri (texte) → exclus d'office.
+   EXCLUSIONS (sinon cette règle, plus spécifique en 0,4,1, écraserait des halos ROUGES dédiés) :
+   • :not(.btn-danger)   → corbeille de suppression GROUPÉE (garde son halo rouge, section 12) ;
+   • :not(.delete-button) → croix ✕ de suppression d'un filtre enregistré, dans la popup « Saved
+     Filter » qui s'ouvre DANS la toolbar (.btn-secondary.delete-button) → garde son halo ROUGE
+     (règle .delete-button:hover svg, section 13). Sans ça, la croix brillait en BLANC au survol. */
+.filtered-list-toolbar .btn svg {
+  transition: filter var(--t);
+}
+
+.filtered-list-toolbar .btn:not(.btn-danger):not(.delete-button):hover svg {
+  filter: var(--icon-glow-white);
+}
+
+/* Chevrons de pagination « ‹ › » (début / précédent / suivant / fin) : ce sont des GLYPHES
+   TEXTE (pas des SVG) → on les fait briller en blanc au survol via text-shadow (équivalent
+   texte de --icon-glow-white : mêmes flous / opacités). Ciblés par position parmi les
+   ENFANTS DIRECTS de .pagination (combinateur >) : 1er, 2e, avant-dernier, dernier.
+   IMPORTANT — le « > » : le bloc compteur « X of Y » (.page-count-container) est un enfant
+   INTERMÉDIAIRE de .pagination ; ses boutons internes (.page-count texte + .page-count-dropdown
+   chevron) ne sont donc PAS des enfants directs. Sans le « > », le sélecteur descendant
+   captait .page-count (1er enfant de son groupe interne) → le TEXTE « 9 of 401 » brillait,
+   ce qu'on ne veut pas. :not(:disabled) → pas de halo sur un bouton grisé. */
+.pagination > .btn:first-child,
+.pagination > .btn:nth-child(2),
+.pagination > .btn:nth-last-child(2),
+.pagination > .btn:last-child {
+  transition: text-shadow var(--t), color var(--t), background-color var(--t),
+    border-color var(--t), box-shadow var(--t);
+}
+
+.pagination > .btn:first-child:not(:disabled):hover,
+.pagination > .btn:nth-child(2):not(:disabled):hover,
+.pagination > .btn:nth-last-child(2):not(:disabled):hover,
+.pagination > .btn:last-child:not(:disabled):hover {
+  text-shadow: var(--text-glow-white);
+}
+
+/* Chevron ⌄ « aller à une page… » à côté du compteur « X of Y » (.page-count-dropdown, un
+   Dropdown.Toggle avec icône SVG). Il BRILLE en blanc au survol (drop-shadow sur le SVG,
+   --icon-glow-white), tandis que le TEXTE « X of Y » (.page-count) reste SANS halo. */
+.page-count-dropdown svg {
+  transition: filter var(--t);
+}
+
+.page-count-dropdown:hover svg {
+  filter: var(--icon-glow-white);
+}
+
+/* Bords extérieurs de la barre de pagination. Stash retire VOLONTAIREMENT le bord GAUCHE du
+   premier bouton « (border-left:none) et le bord DROIT du dernier bouton » (border-right:none)
+   — cf. List/styles.scss. Résultat : les extrémités du groupe restaient « ouvertes »
+   (bordure incomplète à gauche/droite). La règle de thème (section 8) ne force que la COULEUR
+   des bords, pas leur STYLE, donc le `none` de Stash gagnait. On rétablit ces deux bords
+   extérieurs (1px, couleur du thème) → cadre bien fermé, comme le reste. Même spécificité que
+   la règle Stash (0,3,0), chargée après → gagne sans !important. Les dividers internes ne
+   bougent pas (fournis par les bords des boutons voisins). */
+.pagination .btn:first-child {
+  border-left: 1px solid var(--custom-darker);
+}
+.pagination .btn:last-child {
+  border-right: 1px solid var(--custom-darker);
+}
+
+/* Bouton « valider » (icône ✓) des popovers de saut de page (#select_page_popover, ouvert
+   en cliquant sur « X of Y ») ET de taille de page custom (#custom_pagesize_popover) : c'est
+   un <Button variant="primary"> → .btn-primary → ROSE. On l'aligne sur un bouton SECONDAIRE
+   gris (même traitement que le ⟳ du menu scraper) : fond --custom-gray dans tous les états +
+   halo gris (--gray-glow) au survol. Scopé aux deux id → aucun impact ailleurs ; le
+   !important bat les règles roses des .btn-primary de la section 5 (dont :focus/:active
+   après clic). */
+#select_page_popover .btn-primary,
+#select_page_popover .btn-primary:hover,
+#select_page_popover .btn-primary:focus,
+#select_page_popover .btn-primary:active,
+#custom_pagesize_popover .btn-primary,
+#custom_pagesize_popover .btn-primary:hover,
+#custom_pagesize_popover .btn-primary:focus,
+#custom_pagesize_popover .btn-primary:active {
+  background-color: var(--custom-gray) !important;
+  border-color: var(--custom-gray) !important;
+}
+
+#select_page_popover .btn-primary:hover,
+#custom_pagesize_popover .btn-primary:hover {
+  box-shadow: var(--gray-glow) !important;
+}
+
+/* Page active de la pagination (les petits carrés « 1 2 3 » affichés quand il y a peu de pages,
+   au lieu du menu déroulant). Le gris moyen (--custom-gray) tranchait trop ; on la passe au gris
+   le plus SOMBRE du thème (--custom-darker), plus foncé que les boutons voisins (--custom-dark)
+   → la page courante ressort comme « enfoncée », dans les tons du thème (pas de rose, ce serait
+   trop). On couvre aussi :focus / :active pour supprimer le halo bleu de focus de Bootstrap qui
+   réapparaissait quand la souris quittait le bouton (encore focus après le clic) ; box-shadow:
+   none tue ce halo, la couleur reste dans tous les états. */
+.pagination .btn-secondary.active,
+.pagination .btn-secondary.active:hover,
+.pagination .btn-secondary.active:focus,
+.pagination .btn-secondary.active:active {
+  background-color: var(--custom-darker) !important;
+  border-color: var(--custom-darker) !important;
+  box-shadow: none !important;
+}
+
+div.dropdown-menu {
+  background-color: var(--custom-dark);
+}
+
+/* Élément actif d'un menu déroulant — dont la PAGE COURANTE dans le sélecteur de
+   page (la pagination utilise un dropdown). Bootstrap le met en bleu #137cbd ;
+   on le passe au gris clair du thème. Notre CSS étant chargé en dernier, un
+   sélecteur de même spécificité suffit à gagner (pas besoin de !important). */
+.dropdown-item.active,
+.dropdown-item:active {
+  background-color: var(--custom-gray);
+}
+
+/* Menu déroulant « aller à une page » de la pagination (le chevron ⌄ à côté de « X of Y »,
+   toggle .page-count-dropdown ; menu = liste des numéros de page). On lui donne un schéma
+   propre, à part du gris commun des autres dropdowns :
+   • fond du menu           : --custom-darker (le plus sombre) ;
+   • élément sélectionné    : --custom-dark (un cran plus clair → surlignage discret) ;
+   • élément survolé        : --custom-dark aussi (au lieu du gris translucide de Stash).
+   Scopé via .dropdown:has(.page-count-dropdown) → n'affecte QUE ce menu (règle d'or §8).
+   .page-count-dropdown est unique à ce Dropdown ; le menu est un frère du toggle dans le
+   même conteneur .dropdown. Spécificité (0,3,0 / 0,4,0) → bat les règles ci-dessus sans
+   !important (fond global div.dropdown-menu 0,1,1 ; .active et :hover de Stash 0,2,0). */
+.dropdown:has(.page-count-dropdown) .dropdown-menu {
+  background-color: var(--custom-darker);
+}
+
+.dropdown:has(.page-count-dropdown) .dropdown-item.active,
+.dropdown:has(.page-count-dropdown) .dropdown-item:active,
+.dropdown:has(.page-count-dropdown) .dropdown-item:hover,
+.dropdown:has(.page-count-dropdown) .dropdown-item:focus {
+  background-color: var(--custom-dark);
+}
+
+/* Menus « Scrape with… » (#performer-scraper-popover — page Edit/New performer) et
+   « Set Image… » (#set-image-popover — composant ImageInput, partout où il sert :
+   performer, studio, tag…). On veut le comportement d'un menu déroulant STANDARD (comme
+   le menu « Scrape with… » de la barre d'édition d'une scène, à la loupe) : PAS de
+   soulignement rose, juste un survol GRIS.
+   • repos  : texte blanc, fond transparent ;
+   • survol : texte blanc + fond gris discret — rgba(138,155,168,.15), la teinte de survol
+     des .dropdown-item de Stash, réutilisée telle quelle.
+   Sans ce bloc : les items du 1er menu (.dropdown-item.btn.btn-primary.minimal) prenaient
+   le texte ROSE au survol (section 5) ; les entrées du 2e (.btn, dont un .btn-secondary
+   « From file ») un fond gris + gray-glow. L'id rend le sélecteur assez spécifique pour
+   neutraliser tout ça. Scopé à ces deux id → aucun impact sur les autres menus. */
+#performer-scraper-popover .dropdown-item,
+#set-image-popover .btn {
+  color: #f5f8fa !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+  transition: color var(--t), background-color var(--t);
+}
+
+#performer-scraper-popover .dropdown-item:hover,
+#performer-scraper-popover .dropdown-item:focus,
+#set-image-popover .btn:hover,
+#set-image-popover .btn:focus {
+  color: #f5f8fa !important;
+  background-color: rgba(138, 155, 168, 0.15) !important;
+}
+
+/* Réglages propres au menu « Set Image… » (#set-image-popover). Contrairement au menu
+   scraper (de vrais .dropdown-item, déjà pleine largeur en flex), ce menu est un Popover
+   de <Button> inline-block dans des <div> → deux défauts à corriger :
+   • le « From file » est un .btn-secondary → il gardait sa BORDURE (les deux autres sont
+     .minimal, sans bordure) → on la rend transparente ;
+   • les boutons ne prenaient que la largeur de leur texte → survol pas pleine largeur.
+     On les passe en flex PLEINE LARGEUR, et on retire le padding HORIZONTAL du corps du
+     popover (padding vertical seul, comme un .dropdown-menu) pour que le survol touche les
+     deux bords. Le label .image-input qui enveloppe « From file » doit lui aussi être
+     pleine largeur pour que son bouton s'étende. L'id suffit à battre les défauts
+     Bootstrap/Stash (pas de !important nécessaire). */
+#set-image-popover .popover-body {
+  padding: 0.25rem 0;
+}
+
+#set-image-popover .image-input {
+  display: block;
+  width: 100%;
+}
+
+#set-image-popover .btn {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  width: 100%;
+  padding: 0.375rem 0.75rem;
+  border-color: transparent;
+}
+
+/* Items du menu déroulant de tri (Created At, Date, File Count…) : ils portent
+   .bg-secondary (fond forcé en !important), ce qui masquait le survol gris que les
+   autres items du menu ont. On rétablit ce même gris (la teinte de survol de Stash). */
+.dropdown-item.bg-secondary:hover,
+.dropdown-item.bg-secondary:focus {
+  background-color: rgba(138, 155, 168, 0.15) !important;
+}
+
+/* Popover affiché au survol des icônes d'une carte (tags, performers, marqueurs…).
+   Son fond utilisait encore une couleur de l'ancien thème (#394b59). */
+.popover {
+  background-color: var(--custom-dark);
+  border-color: var(--custom-darker);
+}
+
+/* En-tête du popover (Popover.Title → .popover-header) : ex. le titre « Options » du popover
+   de réglages du diaporama (visionneuse d'images / lightbox, icône ⚙). La règle .popover
+   ci-dessus ne colore que le CORPS (fond hérité par .popover-body, transparent) ; l'en-tête
+   a son PROPRE fond $popover-header-bg (dérivé du $secondary bleu-gris Blueprint) → resté hors
+   thème. On le passe au gris le plus sombre (--custom-darker), un cran plus foncé que le corps
+   (--custom-dark) → séparation nette sans liseré coloré. Texte clair conservé. Global, comme
+   tout le bloc popover (fond + flèche). */
+.popover-header {
+  background-color: var(--custom-darker);
+  border-bottom-color: var(--custom-darker);
+  color: #f5f8fa;
+}
+
+/* Flèche du popover : à recolorer par position, sinon la pointe garde l'ancienne
+   couleur. ::after = le triangle plein (fond) ; ::before = son liseré. */
+.bs-popover-top > .arrow::after,
+.bs-popover-auto[x-placement^="top"] > .arrow::after {
+  border-top-color: var(--custom-dark);
+}
+.bs-popover-top > .arrow::before,
+.bs-popover-auto[x-placement^="top"] > .arrow::before {
+  border-top-color: var(--custom-darker);
+}
+
+.bs-popover-bottom > .arrow::after,
+.bs-popover-auto[x-placement^="bottom"] > .arrow::after {
+  border-bottom-color: var(--custom-dark);
+}
+.bs-popover-bottom > .arrow::before,
+.bs-popover-auto[x-placement^="bottom"] > .arrow::before {
+  border-bottom-color: var(--custom-darker);
+}
+
+.bs-popover-left > .arrow::after,
+.bs-popover-auto[x-placement^="left"] > .arrow::after {
+  border-left-color: var(--custom-dark);
+}
+.bs-popover-left > .arrow::before,
+.bs-popover-auto[x-placement^="left"] > .arrow::before {
+  border-left-color: var(--custom-darker);
+}
+
+.bs-popover-right > .arrow::after,
+.bs-popover-auto[x-placement^="right"] > .arrow::after {
+  border-right-color: var(--custom-dark);
+}
+.bs-popover-right > .arrow::before,
+.bs-popover-auto[x-placement^="right"] > .arrow::before {
+  border-right-color: var(--custom-darker);
+}
+
+/* Bandeaux de contrôle (file d'attente, édition de scène) */
+#queue-viewer .queue-controls,
+#scene-edit-details .edit-buttons-container {
+  background-color: var(--custom-dark);
+}
+
+/* Boutons de contrôle de la file d'attente (onglet Queue d'une scène : précédent, suivant,
+   aléatoire). Ce sont des <Button variant="secondary" className="minimal"> → .btn-secondary.minimal
+   qu'AUCUNE règle ne captait (nos règles secondaires excluent .minimal, nos règles d'icônes sont
+   scopées ailleurs) → ils gardaient le fond gris secondaire de Bootstrap, sans brillance. On les
+   aligne sur les autres boutons-icônes du thème : fond transparent (la barre --custom-dark
+   transparaît), aucun halo rectangulaire, et l'icône BRILLE en blanc au survol (--icon-glow-white
+   sur le SVG). Scopé à #queue-viewer .queue-controls → n'affecte rien d'autre. */
+#queue-viewer .queue-controls .btn,
+#queue-viewer .queue-controls .btn:hover,
+#queue-viewer .queue-controls .btn:focus,
+#queue-viewer .queue-controls .btn:active {
+  color: #f5f8fa !important;
+  background-color: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+#queue-viewer .queue-controls .btn svg {
+  transition: filter var(--t);
+}
+
+#queue-viewer .queue-controls .btn:hover svg {
+  filter: var(--icon-glow-white);
+}
+
+/* Scène COURANTE dans la liste de lecture (onglet Queue) : le <li> porte .current. Stash le met
+   à $secondary (#394b59, bleu-gris hors thème). On le passe à --custom-darker pour rester dans les
+   tons du thème. Même spécificité que le SCSS Stash (#queue-viewer .current), chargé après → gagne
+   sans !important. */
+#queue-viewer .current {
+  background-color: var(--custom-darker);
+}
+
+/* -----------------------------------------------------------------------------
+   8 bis. CALENDRIER (react-datepicker) — ex. filtres de date dans Edit Filter
+   -----------------------------------------------------------------------------
+   Composant = la lib externe react-datepicker. Stash le thème déjà mais avec ses
+   variables SCSS d'origine ($body-bg, $secondary…), donc PAS mes gris. On le repasse
+   aux couleurs du site (les deux gris) et on souligne les dates en rose au survol.
+   Le soulignement passe par box-shadow inset → aucun décalage de la grille. --- */
+
+/* Cadre + fond général : gris foncé (--custom-dark) */
+div.react-datepicker {
+  background-color: var(--custom-dark) !important;
+  border-color: var(--custom-darker) !important;
+  color: #f5f8fa !important;
+}
+
+/* En-têtes (jours de la semaine, barre des dropdowns mois/année) : gris clair */
+div.react-datepicker .react-datepicker__header,
+div.react-datepicker .react-datepicker-time__header {
+  background-color: var(--custom-darker) !important;
+  border-bottom-color: var(--custom-darker) !important;
+  color: #f5f8fa !important;
+}
+
+div.react-datepicker .react-datepicker__day-name,
+div.react-datepicker .react-datepicker__day {
+  color: #f5f8fa !important;
+}
+
+/* Jours désactivés / hors du mois : grisés */
+div.react-datepicker .react-datepicker__day--disabled,
+div.react-datepicker .react-datepicker__day--outside-month {
+  color: color-mix(in srgb, #f5f8fa 40%, transparent) !important;
+}
+
+/* Survol d'une date : pas de fond, juste un SOULIGNEMENT rose. */
+div.react-datepicker .react-datepicker__day:hover {
+  background-color: transparent !important;
+  border-radius: 0 !important;
+  box-shadow: inset 0 -2px 0 0 var(--custom-pink) !important;
+  color: #f5f8fa !important;
+}
+
+/* Date sélectionnée / pré-sélectionnée (au lieu du bleu par défaut) : texte rose +
+   soulignement rose, façon onglet sélectionné. */
+div.react-datepicker .react-datepicker__day--selected,
+div.react-datepicker .react-datepicker__day--keyboard-selected {
+  background-color: transparent !important;
+  border-radius: 0 !important;
+  box-shadow: inset 0 -2px 0 0 var(--custom-pink) !important;
+  color: var(--custom-pink) !important;
+}
+
+/* Dropdowns mois / année : fond gris clair, survol des options en gris discret */
+div.react-datepicker .react-datepicker__month-dropdown,
+div.react-datepicker .react-datepicker__year-dropdown {
+  background-color: var(--custom-darker) !important;
+  border-color: var(--custom-dark) !important;
+}
+
+div.react-datepicker .react-datepicker__month-option:hover,
+div.react-datepicker .react-datepicker__year-option:hover {
+  background-color: rgba(138, 155, 168, 0.15) !important;
+}
+
+/* Sélection de l'heure (mode date-heure) */
+div.react-datepicker div.react-datepicker__time-container div.react-datepicker__time {
+  background-color: var(--custom-dark) !important;
+  color: #f5f8fa !important;
+}
+
+div.react-datepicker .react-datepicker__time-list-item:hover {
+  background-color: rgba(138, 155, 168, 0.15) !important;
+}
+
+div.react-datepicker .react-datepicker__time-list-item--selected {
+  background-color: transparent !important;
+  color: var(--custom-pink) !important;
+  box-shadow: inset 0 -2px 0 0 var(--custom-pink) !important;
+}
+
+/* Flèches de navigation (mois précédent / suivant) : gris clair, rose au survol */
+div.react-datepicker .react-datepicker__navigation-icon::before {
+  border-color: #8a9ba8 !important;
+}
+
+div.react-datepicker
+  .react-datepicker__navigation:hover
+  .react-datepicker__navigation-icon::before {
+  border-color: var(--custom-pink) !important;
+}
+
+/* -----------------------------------------------------------------------------
+   9. SIDEBAR
+   -------------------------------------------------------------------------- */
+.sidebar-pane .sidebar {
+  background-color: var(--custom-dark);
+  border-right: 1px solid var(--custom-darker);
+}
+
+.sidebar-section {
+  border-bottom: 1px solid var(--custom-darker);
+}
+
+/* En-têtes des sections de la sidebar masquable (Saved Filters, Studios, Performers,
+   Tags…). Ce sont des .btn-primary.minimal.collapse-button (composant CollapseButton =
+   un chevron SVG + un <span> texte). CHANGEMENT : on abandonne le comportement « onglet »
+   (soulignement rose au survol, texte + soulignement rose persistants quand actif) au profit
+   du MÊME traitement que les en-têtes « Edit Filter » et custom-fields :
+   • texte BLANC dans TOUS les états (repos, survol, focus, actif) — plus aucun rose ;
+   • au survol UNIQUEMENT : GLOW BLANC sur le texte (text-shadow) et le chevron (filter sur le
+     SVG — le bouton ne contient que ce chevron, aucune autre icône). Rien d'autre.
+   Le fond transparent + box-shadow none (base, !important) tuent tout fond/halo bleu Bootstrap
+   dans tous les états. Tout est scopé à .sidebar → aucun impact sur les autres .btn-primary.
+   NB : .sidebar .collapse-button a été RETIRÉ des listes du halo de soulignement rose (§7 bis),
+   sinon un liseré rose brillerait encore en bas au survol. */
+.sidebar .collapse-button,
+.sidebar .collapse-button:hover,
+.sidebar .collapse-button:focus,
+.sidebar .collapse-button:active,
+.sidebar .collapse-button.active {
+  color: #f5f8fa !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Survol : glow blanc sur le texte + le chevron (mêmes variables --text-glow-white /
+   --icon-glow-white que les autres en-têtes d'accordéon). */
+.sidebar .collapse-button:hover {
+  text-shadow: var(--text-glow-white);
+}
+
+.sidebar .collapse-button:hover svg {
+  filter: var(--icon-glow-white);
+}
+
+/* Boutons « Save filter » et « Set as default » de la section Saved Filters. Ce composant a
+   DEUX rendus, tous deux couverts ici pour un effet IDENTIQUE :
+   • SIDEBAR (SidebarSavedFilterList → div.toolbar, conteneur .sidebar-saved-filter-list-container) :
+     .save-filter-button (<Button> SANS variant → variant="primary" par défaut → .btn-primary.minimal
+     → texte ROSE au survol, section 5) + .set-as-default-button (variant="secondary" → .minimal → gris).
+   • DROPDOWN « Saved Filter » ouvert depuis la barre de filtres (SavedFilterList dans
+     .saved-filter-list-menu) : .set-as-default-button en variant="secondary" NON-minimal → la
+     section 5 lui met un FOND GRIS plein au repos + un halo GRIS au survol (différent des boutons
+     sidebar, transparents).
+   On UNIFORMISE les trois : repos = texte clair du thème sans fond, et au survol UNIQUEMENT un
+   GLOW BLANC du texte (comme .card-popovers, custom-fields…). Boutons en TEXTE seul (pas d'icône)
+   → pas de drop-shadow SVG.
+   SCOPING STRICT (crainte = fuite ailleurs) : chaque .set-as-default-button est ciblé via SON
+   conteneur propre (.sidebar-saved-filter-list-container / .saved-filter-list-menu) — la classe
+   .set-as-default-button seule ne suffit pas, elle est partagée par les deux rendus.
+   Le fond transparent + box-shadow none (base, !important) tuent le fond GRIS + halo gris de la
+   section 5 (dropdown), le fond gris du survol .minimal (sidebar) ET le fond rose que la section 5
+   remet au FOCUS des .btn-primary après clic. Le !important bat la section 5 (aucune de ces règles
+   n'est en !important sur ces états). */
+.sidebar-saved-filter-list-container .save-filter-button,
+.sidebar-saved-filter-list-container .set-as-default-button,
+.saved-filter-list-menu .set-as-default-button {
+  background-color: transparent !important;
+  box-shadow: none !important;
+  transition: color var(--t), text-shadow var(--t);
+}
+
+.sidebar-saved-filter-list-container .save-filter-button:hover,
+.sidebar-saved-filter-list-container .set-as-default-button:hover,
+.saved-filter-list-menu .set-as-default-button:hover {
+  color: #f5f8fa !important;
+  text-shadow: var(--text-glow-white);
+}
+
+/* -----------------------------------------------------------------------------
+   10. MODALS
+   -------------------------------------------------------------------------- */
+.modal-header,
+.modal-footer {
+  background-color: var(--custom-darker);
+}
+
+.modal-body {
+  background-color: var(--custom-dark);
+}
+
+/* Blocs de résultats du Tagger : Stash leur pose un fond #495b68 (bleu-gris étranger au
+   thème). On les repasse tous au gris de fond du thème (--custom-darker, comme les cartes).
+   Les VRAIES classes (une par type de tagger) :
+   • .search-item          → tagger de SCÈNE + modals « Scrape … » (stash-box) ;
+   • .PerformerTagger-performer → tagger de PERFORMER ;
+   • .StudioTagger-studio  → tagger de STUDIO ;
+   • .TagTagger-tag        → tagger de TAG ;
+   + le fond des vignettes studio/tag (img).
+   NB : une version précédente ciblait .search-item-performer / -studio / -tag, qui
+   N'EXISTENT PAS (sélecteurs morts) → le #495b68 des taggers studio/performer/tag restait.
+   Corrigé ici avec les bons noms. */
+.search-item,
+.PerformerTagger-performer,
+.StudioTagger-studio,
+.TagTagger-tag,
+.StudioTagger-studio .studio-card img,
+.TagTagger-tag .tag-card img {
+  background-color: var(--custom-darker);
+}
+
+/* Logos / images dans les taggers (studio, tag, performer) : on neutralise l'ANIMATION
+   (soulèvement + ombre) de ma règle de section 6 (.studio-card / .tag-card / .performer-card
+   :hover { transform: translateY(-3px) }). On cible repos + survol pour un rendu PLAT, sans
+   mouvement — comme les logos studio. Scopé à .StudioTagger / .TagTagger / .PerformerTagger →
+   les cartes des pages LISTE gardent leur animation.
+   NB : pour studio/tag, Stash met déjà box-shadow:none ; pour le performer, non → il fallait
+   aussi retirer l'ombre au repos (d'où les sélecteurs sans :hover). */
+.StudioTagger .studio-card,
+.StudioTagger .studio-card:hover,
+.TagTagger .tag-card,
+.TagTagger .tag-card:hover,
+.PerformerTagger .performer-card,
+.PerformerTagger .performer-card:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+/* ID (état « tagged ») affiché dans .StudioTagger-box-link / .PerformerTagger-box-link, juste
+   à gauche du bouton « Refresh » : c'est un .input-group-text Bootstrap (fond gris CLAIR), mais
+   l'ID est un lien qui hérite du blanc du thème → blanc sur gris clair = illisible. On l'écrit
+   en NOIR (le fond gris clair est conservé, seul le texte change). Studio ET performer. */
+.StudioTagger-box-link .input-group-text,
+.StudioTagger-box-link .input-group-text a,
+.PerformerTagger-box-link .input-group-text,
+.PerformerTagger-box-link .input-group-text a {
+  color: #000;
+}
+
+/* -----------------------------------------------------------------------------
+   11. CONTRÔLES (switches, sliders)
+   -------------------------------------------------------------------------- */
+/* Switch : piste sombre teintée de rose quand « on », pastille grise → rose. Mêmes couleurs
+   que le zoom slider (piste = mix rose 22 % + custom-darker, pastille = custom-pink).
+   PRINCIPE (voulu SIMPLE, sans exception d'état) : le CONTOUR de la piste est TOUJOURS
+   sombre et sans box-shadow, quel que soit l'état (repos, coché, focus, cliqué/pressé) — la
+   règle « contour » unique ci-dessous l'impose et tue TOUS les contours bleus OU blancs de
+   Bootstrap (anneau de focus, bordure de l'état actif, y compris le contour vu en ON→OFF
+   pressé, cas :active:checked que les anciennes règles ne couvraient pas). Ne varient QUE le
+   FOND de la piste (::before) et la couleur de la PASTILLE (::after). */
+
+/* Contour : sombre + aucun box-shadow, dans TOUS les états. */
+.custom-control-label::before,
+.custom-control-input:focus ~ .custom-control-label::before,
+.custom-control-input:active ~ .custom-control-label::before,
+.custom-control-input:checked ~ .custom-control-label::before {
+  border: 1px solid var(--custom-dark) !important;
+  box-shadow: none !important;
+}
+
+/* Fond de la piste. Off au repos = #fff (défaut Bootstrap $input-bg, non surchargé). On
+   force le fond « on » (teinté rose), y compris pendant le clic (:active:checked), et on
+   garde le #fff en off pressé (:active) → plus de flash bleu clair Bootstrap, sans saut de
+   teinte. */
+.custom-control-input:checked ~ .custom-control-label::before,
+.custom-control-input:active:checked ~ .custom-control-label::before {
+  background-color: color-mix(in srgb, var(--custom-pink) 22%, var(--custom-darker)) !important;
+}
+.custom-control-input:active:not(:checked) ~ .custom-control-label::before {
+  background-color: #fff !important;
+}
+
+/* Pastille « on » : rose (l'état off, gris, est juste en dessous). */
+.custom-switch .custom-control-input:checked ~ .custom-control-label::after {
+  background-color: var(--custom-pink);
+}
+
+/* Pastille au repos (état off) : grise. La transition est déclarée ICI, avec la couleur, et
+   PAS dans un second bloc au même sélecteur — les deux existaient en double, ce qui invitait
+   à modifier l'un en oubliant l'autre.
+   `transform` DOIT rester dans la liste : c'est lui qui porte le glissement de la pastille
+   d'un bord à l'autre (animation on/off de Bootstrap). Le retirer figerait le switch.
+   box-shadow y est pour le halo de survol, posé plus bas. */
+.custom-switch .custom-control-label::after {
+  background-color: var(--custom-gray);
+  transition: background-color var(--t), box-shadow var(--t), transform var(--t);
+}
+
+/* Brillance au survol : comme le zoom slider, ce n'est plus la pilule entière qui brille
+   mais UNIQUEMENT la PASTILLE (::after). Halo GRIS quand off, ROSE quand on, en réutilisant
+   --gray-glow / --pink-glow (mêmes halos que les boutons ; --pink-glow = exactement celui
+   du thumb du zoom slider). On cible .custom-switch:hover (le conteneur) pour être robuste
+   quel que soit le sous-élément réellement survolé. */
+.custom-switch .custom-control-label::before {
+  transition: background-color var(--t), border-color var(--t);
+}
+
+/* Off (non coché) → la pastille brille en gris */
+.custom-switch:hover .custom-control-input:not(:checked) ~ .custom-control-label::after {
+  box-shadow: var(--gray-glow);
+}
+
+/* On (coché) → la pastille brille en rose */
+.custom-switch:hover .custom-control-input:checked ~ .custom-control-label::after {
+  box-shadow: var(--pink-glow);
+}
+
+/* Cases à cocher et boutons radio natifs (.form-check-input), ex. le choix de
+   résolution (144p, 240p…) dans la zone de filtres. La pastille/coche cochée était
+   bleue (couleur d'accentuation par défaut du navigateur) ; on la passe au rose. */
+.form-check-input,
+input[type="radio"],
+input[type="checkbox"] {
+  accent-color: var(--custom-pink);
+}
+
+/* Slider de ZOOM (taille des cartes de la grille), dans le popover « display mode »
+   (.display-mode-menu .zoom-slider). Avant : piste entièrement rose = trop de rose. On
+   reprend le LANGAGE DES SWITCHES du thème (cf. section 11) : piste sombre à peine TEINTÉE
+   de rose (mix 22 %) + curseur (thumb) rose vif → le rose n'est plus qu'une petite touche
+   (le curseur), la barre n'est plus un aplat rose.
+   IMPORTANT : on ne GROUPE PAS les pseudo-éléments vendeurs (webkit / moz) dans un même
+   sélecteur — un navigateur qui n'en reconnaît qu'un jette TOUTE la règle. D'où une règle
+   séparée par moteur. Le !important bat la règle Stash plus spécifique
+   (.display-mode-menu .zoom-slider::…, qui impose un thumb bleu $primary + piste sombre). */
+.zoom-slider::-webkit-slider-runnable-track {
+  background: color-mix(in srgb, var(--custom-pink) 22%, var(--custom-darker)) !important;
+}
+.zoom-slider::-moz-range-track {
+  background: color-mix(in srgb, var(--custom-pink) 22%, var(--custom-darker)) !important;
+}
+
+.zoom-slider::-webkit-slider-thumb {
+  background: var(--custom-pink) !important;
+  transition: box-shadow var(--t);
+}
+.zoom-slider::-moz-range-thumb {
+  background: var(--custom-pink) !important;
+  transition: box-shadow var(--t);
+}
+
+/* Survol : la « boule » (thumb) BRILLE en rose comme les boutons, via --pink-glow (le glow
+   rose réutilisé partout). box-shadow sur un thumb rond → halo rond. Déclenché sur
+   .zoom-slider:hover (et non ::thumb:hover, peu fiable sous Firefox) → fiable des deux
+   côtés. Règles séparées webkit / moz (même piège de groupement que ci-dessus). */
+.zoom-slider:hover::-webkit-slider-thumb {
+  box-shadow: var(--pink-glow) !important;
+}
+.zoom-slider:hover::-moz-range-thumb {
+  box-shadow: var(--pink-glow) !important;
+}
+
+/* DOUBLE range slider (deux poignées) des filtres de la sidebar — ex. « Duration »,
+   « Age » (composant DoubleRangeInput : deux <input type="range"> superposés,
+   .double-range-slider-min z-index 1 + .double-range-slider-max z-index 2). Non couvert
+   jusqu'ici → il restait en BLEU Bootstrap : la piste vient de _range.scss (background:
+   $primary) et les boules sont $primary + bordure $primary. On lui applique EXACTEMENT le
+   langage du zoom slider ci-dessus : piste sombre teintée de rose (mix 22 %), boule
+   --custom-pink, glow rose au survol.
+   PIÈGES (mêmes règles que le zoom slider) :
+   • La piste VISIBLE est celle du slider MIN uniquement — Stash rend déjà la piste du MAX
+     transparente (.double-range-slider-max, styles.scss) pour laisser voir le MIN dessous.
+     On ne colore donc QUE le MIN, sinon la piste du MAX (au-dessus) recouvrirait tout.
+   • On ne GROUPE PAS webkit / moz dans un même sélecteur (un moteur qui n'en connaît qu'un
+     jette toute la règle) → une règle par moteur.
+   • !important pour battre les règles Stash (base _range.scss plus spécifique sur la piste,
+     .double-range-slider::…-thumb à couleur $primary sur les boules). */
+.double-range-slider-min::-webkit-slider-runnable-track {
+  background: color-mix(in srgb, var(--custom-pink) 22%, var(--custom-darker)) !important;
+}
+.double-range-slider-min::-moz-range-track {
+  background: color-mix(in srgb, var(--custom-pink) 22%, var(--custom-darker)) !important;
+}
+
+/* Les deux boules (min + max) : fond ET bordure roses (Stash pose une bordure $primary =
+   anneau bleu qu'il faut aussi neutraliser). */
+.double-range-slider::-webkit-slider-thumb {
+  background: var(--custom-pink) !important;
+  border-color: var(--custom-pink) !important;
+  transition: box-shadow var(--t);
+}
+.double-range-slider::-moz-range-thumb {
+  background: var(--custom-pink) !important;
+  border-color: var(--custom-pink) !important;
+  transition: box-shadow var(--t);
+}
+
+/* Survol : les deux boules BRILLENT en rose (--pink-glow, comme le thumb du zoom slider).
+   On déclenche sur le CONTENEUR .double-range-sliders:hover (et non ::thumb:hover, peu
+   fiable sous Firefox) → robuste des deux côtés, quel que soit le sous-élément survolé. */
+.double-range-sliders:hover .double-range-slider::-webkit-slider-thumb {
+  box-shadow: var(--pink-glow) !important;
+}
+.double-range-sliders:hover .double-range-slider::-moz-range-thumb {
+  box-shadow: var(--pink-glow) !important;
+}
+
+/* -----------------------------------------------------------------------------
+   12. TAGS, BADGES, PROGRESSION, FAVORI
+   -------------------------------------------------------------------------- */
+.tag-item {
+  background-color: var(--custom-darker);
+  color: #fff;
+}
+
+/* Croix de fermeture des pilules de FILTRES ACTIFS (barre de filtres → .filter-tags → chaque
+   .tag-item contient un <Button variant="secondary"> avec l'icône ✕). PIÈGE signalé : c'est un
+   .btn-secondary → par défaut fond gris + glow gris au survol (section 5). On le corrige
+   LOCALEMENT, sans toucher aux autres .btn-secondary :
+   • fond + bordure TRANSPARENTS (la pilule --custom-darker transparaît dessous → la croix s'y
+     fond) et glow gris supprimé, dans tous les états ;
+   • l'icône ✕ est ROUGE en permanence et BRILLE en rouge au survol (--icon-glow-red sur le SVG,
+     comme toutes les autres croix du thème). Rien d'autre.
+   Scopé à .filter-tags .tag-item → AUCUN autre .btn-secondary du site n'est affecté. Le
+   !important bat les règles grises des .btn-secondary de la section 5 (plus spécifiques). */
+.filter-tags .tag-item .btn-secondary,
+.filter-tags .tag-item .btn-secondary:hover,
+.filter-tags .tag-item .btn-secondary:focus,
+.filter-tags .tag-item .btn-secondary:active {
+  background-color: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  color: #db3737 !important;
+}
+
+.filter-tags .tag-item .btn-secondary svg {
+  transition: filter var(--t);
+}
+
+.filter-tags .tag-item .btn-secondary:hover svg {
+  filter: var(--icon-glow-red);
+}
+
+/* Pilules de valeurs MANQUANTES à ajouter (performers / tags) dans les résultats du scraper
+   (.scrape-dialog → Badge .tag-item = nom + <Button minimal> « + » (ajouter) et lien (associer à
+   un existant)). Le nom est déjà blanc (règle .tag-item ci-dessus), mais les deux boutons sont des
+   .btn.btn-primary.minimal (variant primary par défaut) → PIÈGE habituel : icônes SOMBRES au repos
+   (invisibles sur le fond --custom-darker), ROSE au survol. On les aligne sur les autres icônes du
+   thème : BLANC au repos, glow BLANC au survol, aucun fond.
+   Scopé à .scrape-dialog .tag-item .btn → n'affecte AUCUN autre .btn-primary du site. */
+.scrape-dialog .tag-item .btn,
+.scrape-dialog .tag-item .btn:hover,
+.scrape-dialog .tag-item .btn:focus,
+.scrape-dialog .tag-item .btn:active {
+  color: #f5f8fa !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
+
+.scrape-dialog .tag-item .btn svg {
+  transition: filter var(--t);
+}
+
+.scrape-dialog .tag-item .btn:hover svg {
+  filter: var(--icon-glow-white);
+}
+
+.progress-bar {
+  background-color: var(--custom-dark);
+}
+
+/* Indicateur de chargement (LoadingIndicator : le cercle qui tourne .spinner-border + le texte
+   « Loading… » .LoadingIndicator-message), affiché quand une page se remplit. Stash ne lui met
+   aucune couleur → il hérite du texte clair du thème. On le passe au BLANC standard du thème
+   (#f5f8fa) : l'ancien --custom-darker le rendait presque invisible sur le fond de page, à
+   peine plus clair que lui. On pose la couleur sur le conteneur : le spinner l'utilise via
+   currentColor (sa bordure), le titre l'hérite. */
+.LoadingIndicator,
+.LoadingIndicator .spinner-border,
+.LoadingIndicator .LoadingIndicator-message {
+  color: #f5f8fa;
+}
+
+/* Puces du carrousel de la page d'accueil (slick-dots : petits tirets « - »). L'état INACTIF est
+   parfait (tiret blanc discret, opacity 0.25) → on n'y touche pas. On ne change que :
+   • SURVOL : le tiret passe ROSE et BRILLE ;
+   • ACTIF (.slick-active) : le tiret passe ROSE mais NE brille PAS.
+   Le glyphe étant du TEXTE (police slick), le halo est un text-shadow rose néon (--text-glow-pink,
+   l'équivalent texte de --icon-glow-pink). Glow au SURVOL SEULEMENT (pas :focus) : la puce cliquée
+   garde le focus, or
+   une puce active doit rester SANS halo. Sélecteurs de même spécificité que le SCSS Stash, chargés
+   après → gagnent sans !important. */
+.slick-dots li button:hover::before {
+  color: var(--custom-pink);
+  opacity: 1;
+  text-shadow: var(--text-glow-pink);
+}
+
+.slick-dots li.slick-active button::before {
+  color: var(--custom-pink);
+}
+
+/* Fenêtre « Customize » de la page d'accueil (bouton Customize → conteneur
+   .recommendations-container-edit). Les lignes déplaçables (.recommendation-row, y compris la
+   ligne « Add ») ont un fond $secondary (#394b59, le bleu-gris de l'ancien thème Blueprint) →
+   hors thème. On le repasse à --custom-darker. Scopé au conteneur d'ÉDITION → aucun effet sur la
+   page d'accueil normale. Même spécificité que le SCSS Stash (0,2,0), chargé après → gagne sans
+   !important. */
+.recommendations-container-edit .recommendation-row {
+  background-color: var(--custom-darker);
+}
+
+.badge-info {
+  background-color: var(--custom-darker);
+  color: var(--custom-pink);
+}
+
+/* Pilules « Stash IDs » (.stash-id-pill, un peu partout : onglet Info d'une scène, détails
+   performer/studio…). Stash les colore hors thème : partie GAUCHE (span = label de la source,
+   ex. « stashdb ») en $primary (#137cbd, bleu vif), partie DROITE (a = l'ID) en $secondary
+   (#394b59, gris-bleu). On les repasse à deux gris du thème en gardant le contraste des deux
+   parties, SANS rose : label en --custom-gray (chip un peu plus clair), ID en --custom-darker
+   (plus sombre, façon champ). Texte blanc conservé (lisible sur les deux). */
+.stash-id-pill span {
+  background-color: var(--custom-gray);
+}
+
+.stash-id-pill a {
+  background-color: var(--custom-darker);
+}
+
+/* Cœur « favori » : rose. On garde le rose PENDANT le clic (:active) car sinon
+   Bootstrap force la couleur en blanc à l'appui (.btn-primary:active { color:#fff }),
+   d'où un flash blanc. Et transition: none supprime tout fondu de couleur (donc plus
+   de blanc intermédiaire au passage favori ↔ non-favori). */
+button.btn.favorite-button {
+  transition: none;
+}
+
+/* Couleur du cœur FAVORI = rose. !important INDISPENSABLE : sur la page détail d'un performer,
+   Stash colore ce cœur en #ff7373 via `#performer-page .performer-head .name-icons .favorite`
+   (spécificité 1,3,0 — l'id l'emporte sur notre 0,3,1). Le !important passe outre → cœur favori
+   rose PARTOUT (header performer inclus). Le survol garde son glow rose néon (filter sur le SVG,
+   règle plus bas, indépendante de la couleur). L'état non-favori n'est pas visé → inchangé. */
+button.btn.favorite-button.favorite,
+button.btn.favorite-button.favorite:active,
+button.btn.favorite-button.not-favorite:active {
+  color: var(--custom-pink) !important;
+}
+
+/* Survol / focus / clic : pas d'aplat rose derrière le cœur, juste le cœur qui
+   « brille » en rose. Le !important est nécessaire ici : les règles roses des
+   boutons primaires (.btn-primary…:hover en 0,5,0 et …:focus en 0,6,0, section 5)
+   sont plus spécifiques et rempliraient sinon le cœur d'un pavé rose — y compris
+   l'état :focus qui persiste APRÈS le clic tant qu'on ne clique pas ailleurs. */
+button.btn.favorite-button:hover,
+button.btn.favorite-button:focus,
+button.btn.favorite-button:active,
+button.btn.favorite-button.not-favorite {
+  background: transparent !important;
+  box-shadow: none !important;
+  outline: none;
+}
+
+/* Le glow suit la FORME du cœur (drop-shadow sur l'ICÔNE elle-même — cf. règle 5,
+   posé sur le svg, pas sur le bouton). Il passe par filter (et non box-shadow), donc
+   le box-shadow: none ci-dessus ne l'affecte pas. On réutilise --icon-glow-pink → même
+   halo rose NÉON (3 couches) que les étoiles de note et le reste du thème. */
+button.btn.favorite-button:hover svg {
+  filter: var(--icon-glow-pink);
+}
+
+/* Boutons corbeille (supprimer une date) et + (ajouter une date) de l'onglet History
+   d'une scène. Ce sont des .btn-minimal sans effet au survol par défaut. On les fait
+   « briller » CHACUN DANS SA COULEUR au survol, comme les boutons danger/success du
+   thème : rouge pour la corbeille, vert pour le +. Le halo épouse la forme de l'icône
+   (drop-shadow, pas box-shadow → glow sur la silhouette, pas un rectangle). On empile
+   deux drop-shadows — un serré et vif (le « cœur », façon spread) + un large et doux
+   (le flou) — pour retrouver la brillance des boutons Settings sans le rectangle. */
+.remove-date-button,
+.add-date-button {
+  transition: color var(--t);
+}
+
+/* Le halo (filter) est posé sur le SVG, pas sur le bouton (règle 5). */
+.remove-date-button svg,
+.add-date-button svg {
+  transition: filter var(--t);
+}
+
+/* Corbeille → rouge « danger » (#db3737) */
+.remove-date-button:hover {
+  color: #db3737 !important;
+}
+.remove-date-button:hover svg {
+  filter: var(--icon-glow-red);
+}
+
+/* Plus → vert « success » (#0f9960) */
+.add-date-button:hover {
+  color: #0f9960 !important;
+}
+.add-date-button:hover svg {
+  filter: var(--icon-glow-green);
+}
+
+/* Bouton « stop » (croix ✕) de la task queue (Settings → Logs / file d'attente) :
+   annule une tâche en cours. Sa croix est rouge ($danger #db3737), mais mon survol
+   rose des .btn-primary.minimal la teintait en rose. On garde le rouge et on la fait
+   « briller » en rouge, exactement comme la corbeille (drop-shadow empilé, même rouge).
+   Le !important sur la couleur neutralise la règle rose (spécificité 0,8,0). */
+button.stop {
+  transition: color var(--t);
+}
+
+/* Le halo (filter) est posé sur le SVG, pas sur le bouton (règle 5). */
+button.stop svg {
+  transition: filter var(--t);
+}
+
+button.stop:hover {
+  color: #db3737 !important;
+}
+button.stop:hover svg {
+  filter: var(--icon-glow-red);
+}
+
+/* --- Menu Edit Filter : petites icônes + (vert, .include-button), − et croix (rouge,
+   .exclude-icon), plus le bouton « exclude ». On veut UNIQUEMENT une brillance de leur
+   propre couleur au survol :
+   - pas de virage au blanc (le SCSS force ces icônes en #fff au survol des lignes) ;
+   - pas de remplissage du bouton exclude au clic (c'est un .btn-primary.minimal que
+     mes règles de section 5 remplissaient de rose).
+   Halo empilé identique à la corbeille / la croix « stop ». --- */
+
+/* Transition douce du halo sur les icônes. */
+.include-button,
+.exclude-icon {
+  transition: filter var(--t), color var(--t);
+}
+
+/* Bouton exclude : fond et halo neutralisés dans TOUS les états → plus de remplissage
+   au clic / focus. Le !important bat les règles de remplissage rose (spécificité 0,8,0
+   mais sans !important). */
+.exclude-button,
+.exclude-button:hover,
+.exclude-button:focus,
+.exclude-button:active,
+.exclude-button.active,
+.exclude-button:focus:not(:hover) {
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* + / check inclus (vert) : garde le vert au survol (au lieu du blanc) + halo vert. */
+.selected-object:hover .include-button,
+.unselected-object:hover .include-button {
+  color: #0f9960 !important;
+  filter: var(--icon-glow-green);
+}
+
+/* − / croix exclus (rouge) : garde le rouge au survol (au lieu du blanc) + halo rouge.
+   Couvre la croix rouge des exclus (survol de la ligne) ET le − du bouton exclude. */
+.excluded-object:hover .exclude-icon,
+.exclude-button:hover .exclude-icon {
+  color: #db3737 !important;
+  filter: var(--icon-glow-red);
+}
+
+/* --- Menu des filtres sauvegardés (barre de filtre) : disquette (.save-button,
+   enregistrer / écraser) et croix (.delete-button, supprimer). Au survol, on fait
+   BRILLER l'icône — drop-shadow posé sur le SVG (suit la forme, pas le rectangle du
+   bouton gris) : blanc pour la disquette, rouge pour la croix. On neutralise le halo
+   gris rectangulaire du survol des .btn-secondary pour ne garder que la brillance. --- */
+.save-button,
+.save-button:hover,
+.delete-button,
+.delete-button:hover {
+  box-shadow: none !important;
+}
+
+.save-button svg,
+.delete-button svg {
+  transition: filter var(--t), color var(--t);
+}
+
+/* Disquette → brille en blanc */
+.save-button:hover svg {
+  color: #f5f8fa;
+  filter: var(--icon-glow-white);
+}
+
+/* Croix → brille en rouge */
+.delete-button:hover svg {
+  color: #db3737;
+  filter: var(--icon-glow-red);
+}
+
+/* Corbeille de SUPPRESSION GROUPÉE : barre d'outils des listes quand des items sont
+   sélectionnés (scène / image / performer… — <Button variant="danger"
+   className="delete-button btn-danger-minimal">). Étant un .btn-danger, il a un FOND ROUGE
+   PLEIN + icône blanche, alors que toutes les autres corbeilles du site sont minimal (fond
+   transparent, icône rouge qui brille). La classe .btn-danger-minimal — posée là justement
+   pour le rendre « minimal » — n'a AUCUN style côté Stash (classe morte) : on l'implémente.
+   On force donc un FOND TRANSPARENT et une icône ROUGE au repos, dans tous les états, avec
+   une bordure IDENTIQUE aux boutons voisins de la barre (Play, Edit… en .btn-secondary, à
+   qui la section 8 donne border-color: var(--custom-darker)) → la corbeille s'encadre pareil.
+   Le reste vient GRATUITEMENT des règles globales .delete-button ci-dessus (ce bouton porte
+   aussi cette classe) : halo rouge de l'icône au survol (--icon-glow-red) + suppression du
+   glow rectangulaire du .btn-danger (box-shadow:none). Rien à redéfinir ici pour ça.
+   Cible unique : .btn-danger-minimal n'existe que sur ce bouton (aucun autre usage). */
+.btn-danger-minimal,
+.btn-danger-minimal:hover,
+.btn-danger-minimal:focus,
+.btn-danger-minimal:active {
+  background-color: transparent !important;
+  border-color: var(--custom-darker) !important;
+  color: #db3737 !important;
+}
+
+/* Punaises « épingler le critère » (.pin-criterion-button) des en-têtes du menu Edit
+   Filter : au survol, l'icône brille en BLANC. On garde la rotation que le SCSS
+   applique au survol (transform) en la conservant dans la transition. */
+.pin-criterion-button svg {
+  transition: filter var(--t), transform var(--t);
+}
+
+.pin-criterion-button:hover svg {
+  filter: var(--icon-glow-white);
+}
+
+/* Croix « retirer le critère » (.remove-criterion-button) des en-têtes du menu Edit
+   Filter : déjà rouge ($danger), elle brille en ROUGE au survol comme les autres croix. */
+.remove-criterion-button svg {
+  transition: filter var(--t);
+}
+
+.remove-criterion-button:hover svg {
+  filter: var(--icon-glow-red);
+}
+
+/* Accordéons des Settings (SettingGroup collapsible), ex. Library / Generated Content
+   dans Tasks. Le bouton flèche est .setting-group-collapse-button (.btn-minimal,
+   chevron). Deux choses :
+   • Cadre bleu : le halo de focus Bootstrap réapparaît quand la flèche est À LA FOIS
+     focus (cliquée) ET survolée — ma règle générale ne l'enlève qu'en :not(:hover).
+     On le supprime ici dans TOUS les états.
+   • Au survol, la flèche brille en gris (drop-shadow sur le SVG → suit la forme,
+     n'introduit aucun cadre). */
+.setting-group-collapse-button,
+.setting-group-collapse-button:hover,
+.setting-group-collapse-button:focus,
+.setting-group-collapse-button:active {
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+.setting-group-collapse-button svg {
+  transition: filter var(--t);
+}
+
+.setting-group-collapse-button:hover svg {
+  filter: var(--icon-glow-gray);
+}
+
+/* Bouton « détails » expand/collapse (.expand-collapse, dans .detail-expand-collapse
+   des pages performer/studio/… et dans les listes hiérarchiques). Même comportement
+   que les chevrons des accordéons Settings : brille en gris au survol, AUCUN fond.
+   C'est un .btn-primary.minimal, donc ma règle globale .btn-primary…:active (section 5)
+   le remplissait de rose au clic (même spécificité que la règle Stash, mais chargée
+   après → elle gagnait). On force ici transparent + gris dans tous les états ; le
+   !important est indispensable (sélecteur moins spécifique que la règle globale). */
+.expand-collapse,
+.expand-collapse:hover,
+.expand-collapse:focus,
+.expand-collapse:active {
+  color: #f5f8fa !important;
+  background-color: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+.expand-collapse svg {
+  transition: filter var(--t);
+}
+
+.expand-collapse:hover svg {
+  filter: var(--icon-glow-gray);
+}
+
+/* Icônes « ? » d'aide (rond blanc + point d'interrogation, faQuestionCircle) :
+   • liens de manuel des en-têtes de sections Settings (ManualLink → <a href="…/help/…">),
+     ex. onglet Tasks : Library, Generated Content, Maintenance… ;
+   • boutons d'aide .help-button des dialogues Generate / Identify (ouverts depuis Tasks).
+   Par défaut ils virent au ROSE au survol (a:hover de la section 2 pour les liens ;
+   .btn-primary.minimal:hover de la section 5 pour les boutons). On les garde BLANCS et on
+   les fait BRILLER en blanc au survol (drop-shadow sur le SVG, --icon-glow-white, comme la
+   disquette / la punaise). href*="/help/" (et non ^=) pour rester robuste au basename du
+   BrowserRouter. Le !important est requis pour battre la règle .btn-primary.minimal:hover
+   (section 5, plus spécifique) sur les .help-button ; inoffensif pour les liens. */
+a[href*="/help/"],
+a[href*="/help/"]:hover,
+.help-button,
+.help-button:hover {
+  color: #f5f8fa !important;
+}
+
+a[href*="/help/"] svg,
+.help-button svg {
+  transition: filter var(--t);
+}
+
+a[href*="/help/"]:hover svg,
+.help-button:hover svg {
+  filter: var(--icon-glow-white);
+}
+
+/* Chevrons expand/collapse du Tagger (.tagger-container .collapse-button — un
+   .btn-primary.minimal, page de tagging scène/performer/studio). Par défaut ils virent au
+   ROSE au survol (section 5) et se remplissent au clic. On leur applique le comportement
+   « icône blanche » du thème, comme les chevrons du scene-divider / scrubber : BLANC quel
+   que soit l'état, AUCUN fond ni effet de clic, juste un halo BLANC au survol (drop-shadow
+   sur le SVG, --icon-glow-white).
+   Scopé à .tagger-container → ne touche PAS le .collapse-button de la SIDEBAR (section 9,
+   lui traité en onglet rose). Le !important bat les règles roses des .btn-primary.minimal
+   (section 5, plus spécifiques). */
+.tagger-container .collapse-button,
+.tagger-container .collapse-button:hover,
+.tagger-container .collapse-button:focus,
+.tagger-container .collapse-button:active {
+  color: #f5f8fa !important;
+  background-color: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+.tagger-container .collapse-button svg {
+  transition: filter var(--t);
+}
+
+.tagger-container .collapse-button:hover svg {
+  filter: var(--icon-glow-white);
+}
+
+/* Boutons-liens « minimal link » (.btn.link) : cette classe ne sert QU'À des boutons-liens à
+   ICÔNE qu'on veut tous identiques —
+   • liens sociaux / URLs (composant ExternalLinksButton : faLink, faTwitter, faInstagram),
+     à côté du nom sur la page performer, sur les cartes, etc. ;
+   • bouton lien « site du plugin » (Settings > Plugins), et tout autre .btn.link.
+   Stash les colore de façon incohérente : BLEU ($link-color via .btn.link) pour les liens /
+   twitter, ROSE pour instagram (.instagram { color: pink }), sans effet de survol uniforme.
+   On harmonise TOUT : BLANC, fond transparent, et une BRILLANCE BLANCHE au survol (drop-shadow
+   --icon-glow-white sur le SVG). Le cœur favori (.favorite-button) n'est PAS un .btn.link →
+   épargné. !important pour battre .btn.link:hover (bleu) et .instagram (rose). */
+.btn.link,
+.btn.link:hover,
+.btn.link:focus,
+.btn.link:active {
+  color: #f5f8fa !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
+
+.btn.link svg {
+  transition: filter var(--t);
+}
+
+.btn.link:hover svg {
+  filter: var(--icon-glow-white);
+}
+
+/* -----------------------------------------------------------------------------
+   13. CORRECTIFS DIVERS
+   -------------------------------------------------------------------------- */
+/* Halo (glow) rogné au bord des panneaux d'une scène.
+   Le panneau de gauche défile (overflow) : un conteneur qui défile verticalement
+   rogne aussi le débordement horizontal, ce qui coupe le box-shadow des boutons
+   collés tout en haut / à gauche d'un onglet (Create Marker, Save, etc.).
+   On ajoute un petit tampon pour laisser la place au halo. */
+.scene-tabs .tab-content {
+  padding-top: 12px;
+  padding-left: 12px;
+}
+
+/* Onglet Édition : la barre de boutons est une .row Bootstrap à marge négative,
+   qui recolle le bouton « Save » contre le bord gauche malgré le tampon ci-dessus.
+   On neutralise cette marge. */
+#scene-edit-details .edit-buttons-container {
+  margin-left: 0;
+  margin-right: 0;
+}
+
+/* Sécurité anti-recouvrement : les boutons à halo passent au-dessus de leurs
+   voisins (utile si un élément adjacent masquait une partie du glow). */
+.scene-tabs .btn-primary,
+.scene-tabs .btn-secondary,
+.scene-tabs .btn-danger,
+.scene-tabs .btn-success {
+  position: relative;
+  z-index: 1;
+}
+
+/* Diviseur entre la vidéo et le menu gauche + chevrons du scrubber (#scrubber-back /
+   #scrubber-forward) et des dividers scène/galerie. Fond sombre, sans halo. Les chevrons
+   restent BLANCS (choix assumé : le rose testé auparavant était moins lisible ici). */
+.scene-divider button,
+.scene-divider button:hover,
+.gallery-divider button,
+.gallery-divider button:hover,
+.scrubber-wrapper button,
+.scrubber-wrapper button:hover {
+  background-color: var(--custom-darker) !important;
+  box-shadow: none !important;
+  border-color: var(--custom-dark) !important;
+  color: #f5f8fa !important;
+}
+
+/* Survol : le chevron BRILLE en blanc. Drop-shadow posé sur le SVG (règle 5 : épouse la
+   forme du chevron ; le fond du bouton étant opaque, un filter sur le bouton retomberait
+   sur le rectangle). Réutilise --icon-glow-white, comme la disquette / la punaise. */
+.scene-divider button svg,
+.gallery-divider button svg,
+.scrubber-wrapper button svg {
+  transition: filter var(--t);
+}
+
+.scene-divider button:hover svg,
+.gallery-divider button:hover svg,
+.scrubber-wrapper button:hover svg {
+  filter: var(--icon-glow-white);
+}
+
+/* Résolution / frame rate sous le titre d'une scène : la .scene-subheader est un flex
+   justify-content:space-between (date à gauche, bloc résolution poussé à l'extrême droite
+   du panneau) → la résolution se retrouve collée au .scene-divider qui borde le panneau.
+   On détache la résolution du bord d'un petit espace. */
+.scene-subheader .resolution {
+  margin-right: 0.5rem;
+}
+
+/* Évite un gros carré rouge sur les loupes des images */
+.preview-button button {
+  background-color: transparent !important;
+}
+
+/* Barre de boutons des en-têtes de détail (.details-edit : Edit, Auto Tag, Merge,
+   Submit, Delete…). Espacement inégal — défaut du thème Stash : le SCSS ne pose la
+   marge droite que sur les .btn enfants DIRECTS, or certains boutons (Auto Tag, Submit)
+   sont enveloppés dans un <div> qui, lui, n'a pas de marge → ils se collent au voisin.
+   On donne aux <div> enfants directs la même marge que les boutons. */
+.details-edit > div {
+  margin-right: 0.5rem;
+}
+
+/* Task queue (à part) dans les options */
+#tasks-panel .tasks-panel-queue {
+  background-color: transparent;
+}
+
+.job-table.card {
+  background-color: var(--custom-darker);
+}
+
+/* En-tête des tableaux en mode LISTE (.table-list : scènes, images, galeries…). Stash met
+   son fond à #202b33 ($body-bg, bleu-gris de l'ancien thème) → on le repasse au gris
+   « panneau » du thème (--custom-darker), qui ressort sur le fond plus clair de la page.
+   Les <th> n'ont pas de fond propre, donc styliser le thead suffit. Général (pas seulement
+   .scene-table) pour la cohérence entre toutes les listes ; même spécificité que le SCSS
+   d'origine (.table-list table thead), chargé après → gagne sans !important. */
+.table-list table thead {
+  background-color: var(--custom-darker);
+}
+
+/* Survol de ligne des tableaux liste : Stash met #2d3942 (bleu-gris de l'ancien thème). On
+   le remplace par la teinte de survol STANDARD du thème (rgba(138,155,168,.15)) — celle des
+   items de menus déroulants / tri / calendrier — pour un survol cohérent avec tout le reste
+   de l'UI. Même spécificité que le SCSS d'origine, chargé après → gagne sans !important. */
+.table-list tbody tr:hover {
+  background-color: rgba(138, 155, 168, 0.15);
+}
+
+/* Blocs code / blockquote / pre du markdown (descriptions rendues). Stash met leur fond à
+   darken($card-bg, 3%) = #2a3844 (un bleu-gris hors thème). On le repasse à --custom-dark :
+   l'original faisait « un peu plus sombre que la carte » ($card-bg = notre --custom-darker) ;
+   avec la palette actuelle --custom-dark est légèrement PLUS CLAIR que la carte, donc le bloc
+   ressort un peu au lieu de creuser, mais reste en couleur de thème. Même spécificité que le
+   SCSS d'origine (.markdown …), chargé après → gagne sans !important. */
+.markdown code,
+.markdown blockquote,
+.markdown pre {
+  background-color: var(--custom-dark);
+}
+
+/* Étoiles de notation CLIQUABLES (.rating-stars : noter une scène / image / performer…). Chaque
+   étoile est un <Button .btn-secondary.minimal> contenant une étoile PLEINE (.filled-star, icône
+   .set, découpée en largeur pour le remplissage) + une étoile CONTOUR (.unfilled-star, icône dont
+   la classe varie : unset au repos, set/setting/unsetting sinon). On garde le fonctionnement,
+   on change juste :
+   • JAUNE → ROSE : les états remplis / survolés (.set / .setting / .unsetting) passaient au gold
+     de Stash → on les met à --custom-pink. Le repos (.unset) n'est PAS touché → il garde son
+     contour blanc par défaut.
+   • FOND AU SURVOL : le bouton (.btn-secondary) laissait un léger fond au survol/clic. On le force
+     TRANSPARENT dans tous les états → seul le remplissage rose de l'étoile compte, plus de pavé.
+   Scopé à .rating-stars → aucun autre .btn-secondary touché. */
+.rating-stars .set,
+.rating-stars .setting,
+.rating-stars .unsetting {
+  color: var(--custom-pink);
+}
+
+.rating-stars .btn,
+.rating-stars .btn:hover,
+.rating-stars .btn:focus,
+.rating-stars .btn:active {
+  background-color: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* L'étoile SOUS LE CURSEUR brille en rose (--icon-glow-pink, drop-shadow qui épouse la forme de
+   l'étoile). Seul le bouton :hover est visé → seule l'étoile pointée brille ; les étoiles remplies
+   avant elle restent roses sans halo. */
+.rating-stars .btn svg {
+  transition: filter var(--t);
+}
+
+.rating-stars .btn:hover svg {
+  filter: var(--icon-glow-pink);
+}
+
+/* Affichage COMPACT de la note (mode « Number » : .rating-number → étoile faStar en enfant direct,
+   + le chiffre). On passe cette étoile au ROSE (au lieu du gold de Stash) et on la fait BRILLER en
+   rose au survol du bloc — comme le mode étoiles. Le « > » cible l'étoile décorative sans toucher
+   l'icône crayon du bouton d'édition (.edit-rating-button, imbriqué). */
+.rating-number > .fa-icon {
+  color: var(--custom-pink);
+  transition: filter var(--t);
+}
+
+.rating-number:hover > .fa-icon {
+  filter: var(--icon-glow-pink);
+}
+
+/* Icône CRAYON du bouton d'édition de la note (mode Number, .edit-rating-button). Stash lui met
+   .text-primary → bleu #137cbd en !important (hors thème). On la passe en BLANC (#f5f8fa, le blanc
+   de texte standard du thème) et on la fait BRILLER en blanc au survol (--icon-glow-white, comme
+   les autres icônes d'action). Le !important + la spécificité (0,3,0) battent le .text-primary
+   (0,1,0 !important) de Bootstrap. */
+.rating-number .edit-rating-button .fa-icon {
+  color: #f5f8fa !important;
+  transition: filter var(--t);
+}
+
+.rating-number .edit-rating-button:hover .fa-icon {
+  filter: var(--icon-glow-white);
+}
+
+/* --- Bandeau de note sur les CARTES (RatingBanner : ruban diagonal en haut-gauche de la
+   miniature). À l'origine : fond dégradé GRIS → ROUGE selon la note. NOUVEAU système, tout en
+   ROSE, avec DEUX effets cumulés qui montent avec la note (pour bien différencier les notes) :
+   1. la COULEUR du rose s'éclaircit — rose sombre à note basse → --custom-pink plein au max
+      (mélange rose/noir : part de rose = 40 % + --rl × 3 %, donc 40 % → 100 %) ;
+   2. la BRILLANCE (halo box-shadow rose) augmente — note basse ≈ pas de halo, max = halo marqué.
+   Deux systèmes de note selon la config Stash :
+   • 100 points     → classes .rating-100-0 … .rating-100-20 ;
+   • étoiles pleines → classes .rating-1 … .rating-5 (étalées sur la même échelle 0-20).
+   On stocke le NIVEAU dans --rl (0 → 20), posé par la classe de note, et UNE seule règle en déduit
+   COULEUR + halo (proportionnels à --rl). Le halo est en DEUX couches néon (un cœur serré
+   0.4/0.12/5% + un halo large 1/0.25/4.7%). Pour ajuster : la rampe de couleur (40 % / 3 %) et ces
+   coefficients. --- */
+.rating-banner {
+  background-color: color-mix(in srgb, var(--custom-pink) calc(40% + var(--rl, 0) * 3%), black)
+    !important;
+  box-shadow: 0 0 calc(var(--rl, 0) * 0.4px) calc(var(--rl, 0) * 0.12px)
+      color-mix(in srgb, var(--custom-pink) calc(var(--rl, 0) * 5%), transparent),
+    0 0 calc(var(--rl, 0) * 1px) calc(var(--rl, 0) * 0.25px)
+      color-mix(in srgb, var(--custom-pink) calc(var(--rl, 0) * 4.7%), transparent);
+}
+
+/* Système 100 points : --rl = 0 … 20 */
+.rating-100-0 { --rl: 0; }
+.rating-100-1 { --rl: 1; }
+.rating-100-2 { --rl: 2; }
+.rating-100-3 { --rl: 3; }
+.rating-100-4 { --rl: 4; }
+.rating-100-5 { --rl: 5; }
+.rating-100-6 { --rl: 6; }
+.rating-100-7 { --rl: 7; }
+.rating-100-8 { --rl: 8; }
+.rating-100-9 { --rl: 9; }
+.rating-100-10 { --rl: 10; }
+.rating-100-11 { --rl: 11; }
+.rating-100-12 { --rl: 12; }
+.rating-100-13 { --rl: 13; }
+.rating-100-14 { --rl: 14; }
+.rating-100-15 { --rl: 15; }
+.rating-100-16 { --rl: 16; }
+.rating-100-17 { --rl: 17; }
+.rating-100-18 { --rl: 18; }
+.rating-100-19 { --rl: 19; }
+.rating-100-20 { --rl: 20; }
+
+/* Système étoiles pleines (1 → 5) : étalé sur la même échelle 0-20 (×4) */
+.rating-1 { --rl: 4; }
+.rating-2 { --rl: 8; }
+.rating-3 { --rl: 12; }
+.rating-4 { --rl: 16; }
+.rating-5 { --rl: 20; }
+
+/* -----------------------------------------------------------------------------
+   14. LECTEUR VIDÉO (Video.js)
+   -------------------------------------------------------------------------- */
+/* Barre de contrôle du lecteur (page scène) — frosté SUR LE BLOC GAUCHE UNIQUEMENT. Les boutons
+   blancs deviennent durs à distinguer sur une image claire ; sans les recolorer, on floute TRÈS
+   LÉGÈREMENT le fond DERRIÈRE eux (backdrop-filter, effet « verre dépoli »).
+   • On liste EXPLICITEMENT les contrôles de gauche (skip vidéo, play, seek ±, volume, horloge) :
+     AUCUNE règle ne vise le bloc droit → il reste entièrement par défaut. Ces contrôles se
+     touchant, leurs zones floutées se joignent en une bande continue.
+   • La barre de progression (.vjs-progress-control, pleine largeur) n'est pas listée → épargnée.
+   • Seules les EXTRÉMITÉS de la bande gauche sont arrondies (pilule) : voir le bloc suivant.
+   • Le dégradé sombre du ::before de la barre reste inchangé. Le flou s'estompe avec la barre
+     (opacity 0 quand les contrôles se masquent en lecture). -webkit- pour Safari / Chromium. */
+.video-js .vjs-control-bar .vjs-skip-button,
+.video-js .vjs-control-bar .vjs-play-control,
+.video-js .vjs-control-bar .vjs-seek-button,
+.video-js .vjs-control-bar .vjs-mute-control,
+.video-js .vjs-control-bar .vjs-time-control {
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
+  /* Aplat translucide sombre UNIFORME par-dessus le flou. Deux rôles : (1) il masque la
+     CASSURE visible aux jointures — chaque backdrop-filter floute indépendamment sa zone et
+     laisse un léger liseré à ses bords ; un aplat identique posé au-dessus gomme ces liserés
+     et fait lire la bande comme un SEUL bloc ; (2) il détache mieux les icônes blanches.
+     Teinte du thème, semi-transparente → l'effet « verre » reste visible. Régler l'opacité
+     (35 %) ou la retirer selon le goût. */
+  background-color: color-mix(in srgb, var(--custom-darker) 35%, transparent);
+}
+
+/* Arrondi des EXTRÉMITÉS de chaque bande (backdrop-filter + aplat détourés par le
+   border-radius de l'élément) → bouts en pilule ; jointures internes droites, invisibles car
+   les contrôles se touchent et l'aplat est continu. Cibles par CLASSE (robustes à l'ordre).
+
+   Bloc GAUCHE — DÉBUT : le 1er contrôle dépend de la file d'attente.
+   • En file (classe .vjs-skip-buttons-prev sur le player) : le bouton « vidéo précédente »
+     (.vjs-icon-previous-item, inséré en index 0) est visible → c'est lui le 1er.
+   • Hors file : ce bouton est display:none → c'est play le 1er. */
+.video-js.vjs-skip-buttons-prev .vjs-control-bar .vjs-skip-button.vjs-icon-previous-item {
+  border-top-left-radius: 999px;
+  border-bottom-left-radius: 999px;
+}
+.video-js:not(.vjs-skip-buttons-prev) .vjs-control-bar .vjs-play-control {
+  border-top-left-radius: 999px;
+  border-bottom-left-radius: 999px;
+}
+
+/* Bloc GAUCHE — FIN : la durée (juste avant l'espace central, via son margin-right:auto).
+   padding-right pour décoller le compteur de temps du bord droit arrondi (il finissait trop
+   au ras du bord). */
+.video-js .vjs-control-bar .vjs-duration {
+  border-top-right-radius: 999px;
+  border-bottom-right-radius: 999px;
+  padding-right: 0.7em;
+}
+
+/* -----------------------------------------------------------------------------
+   15. PAGE DE CONNEXION (login)
+   -----------------------------------------------------------------------------
+   La page de login est servie à part (ui/login/login.html + login.css), MAIS elle charge
+   aussi notre thème via <link href="css"> — chargé APRÈS login.css, donc nos règles
+   gagnent (preuve : le bouton « Login » est déjà rose alors que login.css le met en bleu).
+   Particularité : login.css ne recharge PAS le reboot Bootstrap. Or c'est le reboot qui,
+   dans l'app, fait `outline: 0` sur les champs au focus. Sans lui, les champs username /
+   password gardaient l'ANNEAU DE FOCUS BLEU par défaut du navigateur — le « bleu » restant.
+   (Les couches bleues du box-shadow de login.css, elles, sont en alpha 0 → invisibles.)
+   On corrige ici, scopé à body.login pour n'affecter que cette page. */
+
+/* Fond des champs en --custom-dark (plus clair que la carte #30404d de login.css) → plus de
+   contraste. !important pour battre la règle globale .text-input (§4, --custom-darker
+   !important). Bordure transparente réservée au repos : login.css met border:0, or notre
+   focus pose une bordure rose de 1px → sans réserve, le champ sauterait de 2px au focus. */
+body.login .text-input,
+body.login .text-input:focus,
+body.login .text-input[readonly] {
+  background-color: var(--custom-dark) !important;
+  border: 1px solid transparent;
+}
+
+/* Focus : QUE le rose. outline:none tue l'anneau bleu du navigateur (absent de reboot ici) ;
+   bordure + halo roses du thème, comme tous les autres champs. */
+body.login .text-input:focus {
+  outline: none;
+  border-color: var(--custom-pink);
+  box-shadow: var(--pink-focus);
+}
