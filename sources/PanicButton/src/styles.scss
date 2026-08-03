@@ -1,0 +1,48 @@
+/**
+ * L'écran de masquage.
+ *
+ * La couleur et l'image sont posées en inline par main.ts, d'après la config.
+ * Ce fichier ne gère que le positionnement et l'empilement.
+ */
+
+/**
+ * L'écran est fait de deux couches superposées, et ce n'est pas décoratif :
+ * c'est le filet de sécurité.
+ *
+ *   .panic-overlay            noir opaque, jamais configurable
+ *   .panic-overlay__surface   la couleur et l'image de l'utilisateur
+ *
+ * Si la couleur choisie est invalide, translucide, ou si l'image ne se charge
+ * pas, la couche du dessus ne peint rien — et c'est le noir du dessous qui
+ * reste visible. Une erreur de configuration ne peut donc jamais produire un
+ * écran transparent, qui masquerait la page tout en la laissant voir.
+ */
+
+.panic-overlay {
+  position: fixed;
+  // `inset` couvre la fenêtre entière, quel que soit le défilement.
+  inset: 0;
+  // La valeur maximale d'un entier signé 32 bits : rien ne passe au-dessus,
+  // ni les modales de Stash, ni les popovers d'un autre plugin.
+  z-index: 2147483647;
+
+  // Le fond de sécurité. Volontairement en dur : aucun réglage ne doit
+  // pouvoir le rendre transparent.
+  background-color: #000;
+
+  // Intercepte les clics : impossible d'interagir avec la page en dessous.
+  pointer-events: all;
+  // Évite qu'un double-clic ne sélectionne du texte à travers l'écran.
+  user-select: none;
+  cursor: default;
+
+  &__surface {
+    position: absolute;
+    inset: 0;
+
+    // Recouvre l'écran sans déformer l'image, quitte à en rogner les bords.
+    background-position: center center;
+    background-repeat: no-repeat;
+    background-size: cover;
+  }
+}

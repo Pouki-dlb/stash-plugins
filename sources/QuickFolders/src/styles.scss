@@ -1,0 +1,100 @@
+/**
+ * Nommage aligné sur ce qui existe déjà autour du plugin : simple tiret pour
+ * les parties d'un bloc (comme Stash, qui écrit .scene-card-preview-image et
+ * n'utilise nulle part le double underscore), double tiret réservé aux
+ * variantes (comme ValkyrSceneCards et ses .vsc-gender-color--female).
+ *
+ * Tout est exposé en variables CSS pour rester surchargeable depuis
+ * Settings > Interface > Custom CSS, sans avoir à rebuilder le plugin.
+ */
+:root {
+  --qf-gap: 0.35rem;
+  --qf-chip-max-width: 18rem;
+  --qf-title-color: rgba(255, 255, 255, 0.6);
+  --qf-title-size: 0.75rem;
+}
+
+.qf-root:empty {
+  display: none;
+}
+
+/**
+ * Punaise penchée = « à épingler ». Stash utilise la même convention dans
+ * EditFilterDialog, mais via une classe .tilted définie dans le SCSS de ses
+ * listes : on redéfinit la nôtre pour ne dépendre d'aucune feuille externe.
+ */
+.qf-tilted {
+  transform: rotate(45deg);
+}
+
+.qf-bar {
+  margin-bottom: 0.75rem;
+}
+
+.qf-bar-header {
+  align-items: baseline;
+  display: flex;
+  gap: 0.5rem;
+  justify-content: space-between;
+  margin-bottom: var(--qf-gap);
+}
+
+.qf-bar-title {
+  color: var(--qf-title-color);
+  font-size: var(--qf-title-size);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.qf-bar-action {
+  background: none;
+  border: 0;
+  color: var(--qf-title-color);
+  font-size: var(--qf-title-size);
+  padding: 0;
+  text-decoration: underline;
+
+  &:hover:not(:disabled) {
+    color: inherit;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+  }
+}
+
+.qf-bar-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--qf-gap);
+}
+
+/**
+ * Une pastille est un bloc unique, composé du libellé et de la punaise : seuls
+ * les coins extérieurs sont arrondis, et un filet sépare les deux moitiés.
+ *
+ * Les deux moitiés ont la même opacité pleine et réagissent au survol pour leur
+ * propre compte, via le seul style de bouton de Bootstrap : passer sur le
+ * libellé ne change pas la punaise, et réciproquement.
+ */
+.qf-chip {
+  display: flex;
+}
+
+.qf-chip-apply {
+  border-bottom-right-radius: 0;
+  border-top-right-radius: 0;
+  max-width: var(--qf-chip-max-width);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.qf-chip-pin {
+  border-bottom-left-radius: 0;
+  border-left: 1px solid rgba(0, 0, 0, 0.25);
+  border-top-left-radius: 0;
+  line-height: 1;
+  padding-left: 0.4rem;
+  padding-right: 0.4rem;
+}

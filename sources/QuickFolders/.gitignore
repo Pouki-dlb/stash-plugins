@@ -1,0 +1,9 @@
+node_modules/
+dist/
+test/.build/
+
+# Filet de securite : le config.yml d'un SERVEUR Stash contient jwt_secret_key,
+# session_store_key et le hash du mot de passe. Il n'a rien a faire ici, mais
+# une copie s'y retrouve vite (cf. PanicButton/config.yml).
+config.yml
+

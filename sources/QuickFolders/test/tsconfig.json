@@ -1,0 +1,23 @@
+{
+  "//": "Compile uniquement les helpers, en CommonJS, pour que Node puisse les charger. Le reste du plugin dépend de window.PluginApi et n'est pas testable hors navigateur.",
+  "compilerOptions": {
+    "target": "es2017",
+    "lib": ["es2017", "dom"],
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "skipLibCheck": true,
+    "baseUrl": "..",
+    "paths": {
+      "@helpers/*": ["./src/helpers/*"]
+    },
+    "outDir": "./.build"
+  },
+  "files": [
+    "../src/helpers/config.ts",
+    "../src/helpers/lists.ts",
+    "../types/QuickFolders.d.ts"
+  ]
+}

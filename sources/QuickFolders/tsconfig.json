@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+    // Stash tourne dans un navigateur moderne : es2017 pour avoir async/await
+    // natif dans le bundle (l'intercepteur fetch en fait un usage intensif).
+    "target": "es2017",
+    "lib": ["es2017", "dom"],
+    // "react" = le JSX est transformé en React.createElement(...).
+    "jsx": "react",
+    "module": "commonjs",
+    "moduleResolution": "node",
+
+    // Raccourcis d'import. À garder synchronisés avec les alias de
+    // webpack.common.js.
+    "baseUrl": ".",
+    "paths": {
+      "@components/*": ["./src/components/*"],
+      "@helpers/*": ["./src/helpers/*"],
+      "@pluginTypes/*": ["./types/*"]
+    },
+
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "skipLibCheck": true
+  },
+  "include": ["src/**/*", "types/**/*"]
+}
