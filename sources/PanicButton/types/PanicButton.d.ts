@@ -8,7 +8,6 @@
 type PanicTriggerSetting =
   | "05keyBackquote"
   | "06keyInsert"
-  | "07keyEscape"
   | "08keyPause"
   | "09keyScrollLock"
   | "10keyF01"
@@ -25,6 +24,9 @@ type PanicTriggerSetting =
 /** La config telle que Stash la renvoie : tout est optionnel, car Stash ne
  * stocke une option qu'une fois modifiée par l'utilisateur. */
 interface PanicConfigMap extends Partial<Record<PanicTriggerSetting, boolean>> {
+  /** L'ancienne case Escape, plus proposée mais encore lisible chez ceux qui
+   * l'avaient cochée. Voir LEGACY_ESCAPE_SETTING dans main.ts. */
+  "07keyEscape"?: boolean;
   "01overlayColor"?: string;
   "02overlayImageUrl"?: string;
   "03disguiseTitle"?: string;

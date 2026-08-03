@@ -1,6 +1,6 @@
 name: PanicButton!
 description: Pause playback, cover the screen and disguise the browser tab with a single key press.
-version: 2.0.0
+version: 2.1.0
 url: https://discourse.stashapp.cc/t/panic-button/12699
 
 ui:
@@ -10,7 +10,6 @@ ui:
     - PanicButton.css
 
 settings:
-  # --- Arrière-plan ---------------------------------------------------------
   01overlayColor:
     displayName: Overlay colour
     description: 'The colour of the screen shown while hidden. Any CSS colour works, for example #000000 or white. Defaults to black.'
@@ -20,7 +19,6 @@ settings:
     description: Show an image instead of a plain colour. Leave blank for a plain colour. The image is scaled to cover the screen, and the overlay colour stays visible behind it while it loads or if it cannot be reached.
     type: STRING
 
-  # --- Onglet ---------------------------------------------------------------
   03disguiseTitle:
     displayName: Tab title while hidden
     description: The text shown in the browser tab while the screen is hidden. Defaults to "New Tab".
@@ -30,18 +28,13 @@ settings:
     description: The favicon shown in the browser tab while the screen is hidden. Leave blank for a blank icon, which is the closest match to an empty tab. Accepts any URL your browser can load.
     type: STRING
 
-  # --- Touches de déclenchement ---------------------------------------------
   05keyBackquote:
     displayName: "Trigger on: ` (backquote)"
-    description: 'On a US keyboard, the key left of 1 and above Tab. Ticked for you when the plugin is first installed: it is the best all-round choice, easy to reach, unused by Stash, and it needs no Fn on a Mac. Keys are matched by physical position, so on a non-US layout this may land on a different key: on a French PC it is ², and on a French Mac it is the < > key next to left Shift.'
+    description: 'On a US keyboard, the key left of 1 and above Tab. Ticked for you when the plugin is first installed: it is the best all-round choice, easy to reach, unused by Stash, and it needs no Fn on a Mac. Keys are recognised by their position rather than by the character printed on them, so on a French PC this is the ² key, in that same spot left of 1. Apple is the exception: macOS gives that name to another key on a non-US keyboard, so on a French Mac it is the < > key next to left Shift.'
     type: BOOLEAN
   06keyInsert:
     displayName: "Trigger on: Insert"
     description: Free of conflicts, and far from the keys you use while browsing. Missing from Apple keyboards and from some compact PC keyboards.
-    type: BOOLEAN
-  07keyEscape:
-    displayName: "Trigger on: Escape"
-    description: Present on every keyboard including Apple ones, but Stash and your browser both use it to close dialogs and leave fullscreen.
     type: BOOLEAN
   08keyPause:
     displayName: "Trigger on: Pause"
@@ -91,7 +84,8 @@ settings:
     displayName: "Trigger on: F10"
     description: Opens the menu bar in some browsers. On a Mac, needs Fn unless function keys are set to standard behaviour.
     type: BOOLEAN
+
   22customTriggerKeys:
     displayName: Additional trigger keys
-    description: 'For anything not in the list above, including key combinations. Separate several with commas, for example: ctrl+shift+h, Home. On a Mac use cmd instead of ctrl, for example cmd+shift+h. Leave blank if the checkboxes are enough.'
+    description: 'For anything not in the list above, including key combinations. Separate several with commas, for example: ctrl+shift+h, Home. On a Mac use cmd instead of ctrl, for example cmd+shift+h. Escape works here too, but it is no longer recommended: while a video is fullscreen the browser keeps that key for itself, so the first press only leaves fullscreen and a second one is needed to hide the screen. Leave blank if the checkboxes are enough.'
     type: STRING

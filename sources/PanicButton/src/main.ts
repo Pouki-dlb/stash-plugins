@@ -43,7 +43,7 @@ const DEFAULTS: PanicConfig = {
 const TRIGGER_KEYS: TriggerKeyOption[] = [
   { setting: "05keyBackquote", key: "Backquote" },
   { setting: "06keyInsert", key: "Insert" },
-  { setting: "07keyEscape", key: "Escape" },
+  // Pas d'Escape : voir LEGACY_ESCAPE_SETTING. Le numéro 07 reste libre.
   { setting: "08keyPause", key: "Pause" },
   { setting: "09keyScrollLock", key: "ScrollLock" },
   { setting: "10keyF01", key: "F1" },
@@ -77,6 +77,21 @@ const TRIGGER_KEYS: TriggerKeyOption[] = [
  * clavier Mac, là où F1-F12 exigent la touche Fn par défaut.
  */
 const SEED_CONFIG: PanicConfigMap = { "05keyBackquote": true };
+
+/**
+ * L'ancienne case à cocher d'Escape, retirée du manifeste en 2.1.0.
+ *
+ * En plein écran, le navigateur se réserve Escape pour en sortir et ne
+ * transmet pas l'événement à la page — délibérément, pour qu'un site ne puisse
+ * pas y retenir son visiteur. L'écouteur n'est donc jamais appelé, et aucun
+ * preventDefault n'y change quoi que ce soit : le premier appui ne fait que
+ * quitter le plein écran, il en faut un second pour masquer.
+ *
+ * Le défaut tombe exactement sur la situation où le plugin sert le plus, donc
+ * la touche n'est plus proposée. Elle reste saisissable dans le champ libre,
+ * pour qui la veut en connaissance de cause.
+ */
+const LEGACY_ESCAPE_SETTING = "07keyEscape";
 
 let config: PanicConfig = { ...DEFAULTS };
 
@@ -183,21 +198,32 @@ async function graphql(
 }
 
 /**
+ * Écrit la configuration du plugin.
+ *
+ * `input` doit toujours être la configuration *entière* : côté serveur,
+ * SetPluginConfiguration remplace la map du plugin au lieu de la compléter
+ * ("It will overwrite any existing configuration"). Une écriture partielle
+ * efface tout le reste.
+ */
+async function writeConfig(input: PanicConfigMap): Promise<void> {
+  await graphql(
+    `mutation ($id: ID!, $input: Map!) {
+      configurePlugin(plugin_id: $id, input: $input)
+    }`,
+    { id: PLUGIN_ID, input }
+  );
+}
+
+/**
  * Inscrit les réglages par défaut dans Stash, une seule fois.
  *
  * Appelé uniquement quand le plugin n'a encore aucune configuration
- * enregistrée. C'est indispensable : la mutation configurePlugin remplace la
- * totalité de la configuration du plugin, elle ne la complète pas. L'appeler
- * sur une config existante effacerait les choix de l'utilisateur.
+ * enregistrée — sur une config existante, l'écrasement décrit au-dessus
+ * effacerait les choix de l'utilisateur.
  */
 async function seedDefaultConfig(): Promise<void> {
   try {
-    await graphql(
-      `mutation ($id: ID!, $input: Map!) {
-        configurePlugin(plugin_id: $id, input: $input)
-      }`,
-      { id: PLUGIN_ID, input: SEED_CONFIG }
-    );
+    await writeConfig(SEED_CONFIG);
     console.info(
       "[PanicButton] First run: the backquote key has been ticked in the plugin settings."
     );
@@ -206,6 +232,36 @@ async function seedDefaultConfig(): Promise<void> {
     // en mémoire pour cette session, seule la case restera décochée.
     console.warn("[PanicButton] Could not write the default settings.", err);
   }
+}
+
+/**
+ * Déplace une case Escape cochée vers le champ libre, puis la supprime.
+ *
+ * Sans ça, la case ayant disparu du manifeste, la valeur enregistrée resterait
+ * dans le config.yml sans que plus personne ne la lise : la touche panique de
+ * ceux qui l'avaient choisie cesserait de fonctionner, sans que rien ne le
+ * leur dise. Le pire mode de défaillance pour ce plugin.
+ *
+ * Le déplacement rend aussi le choix visible et modifiable : la touche
+ * apparaît en toutes lettres dans les réglages, là où une case disparue ne
+ * laisse rien à décocher.
+ *
+ * Modifie `stored` sur place et rend vrai s'il y a lieu de l'enregistrer.
+ */
+function unpackLegacyEscape(stored: PanicConfigMap): boolean {
+  if (!stored[LEGACY_ESCAPE_SETTING]) return false;
+
+  const custom = (stored["22customTriggerKeys"] ?? "").trim();
+  const alreadyListed = custom
+    .split(",")
+    .some((raw) => raw.trim().toLowerCase() === "escape");
+
+  delete stored[LEGACY_ESCAPE_SETTING];
+  if (!alreadyListed) {
+    stored["22customTriggerKeys"] = custom ? `${custom}, Escape` : "Escape";
+  }
+
+  return true;
 }
 
 /** Récupère la config du plugin, et l'initialise au premier lancement. */
@@ -220,6 +276,19 @@ async function loadConfig(): Promise<void> {
     if (Object.keys(stored).length === 0) {
       Object.assign(stored, SEED_CONFIG);
       void seedDefaultConfig();
+    } else if (unpackLegacyEscape(stored)) {
+      // `stored` est déjà à jour, donc les raccourcis résolus plus bas tiennent
+      // compte d'Escape sans attendre la réponse du serveur.
+      writeConfig(stored)
+        .then(() =>
+          console.info(
+            '[PanicButton] The Escape tick box is gone. "Escape" has been moved ' +
+              "to the additional trigger keys, where you can remove it."
+          )
+        )
+        .catch((err) =>
+          console.warn("[PanicButton] Could not move the Escape setting.", err)
+        );
     }
 
     config = {
@@ -333,6 +402,35 @@ function pauseAllMedia(): void {
     });
 }
 
+/**
+ * Sort du plein écran, s'il y en a un.
+ *
+ * Le navigateur ne peint que l'élément passé en plein écran et ses
+ * descendants. Notre écran, accroché au <body>, est bien créé mais reste
+ * invisible tant qu'on y est : il n'apparaît qu'à la sortie.
+ *
+ * La sortie est asynchrone — l'image reste donc affichée le temps de la
+ * transition — mais elle rend aussi la barre d'onglets au navigateur, sans
+ * laquelle le déguisement du titre et du favicon ne sert à rien.
+ *
+ * Le préfixe webkit couvre les Safari antérieurs à 16.4.
+ */
+function exitFullscreen(): void {
+  const doc = document as Document & {
+    webkitFullscreenElement?: Element | null;
+    webkitExitFullscreen?: () => void;
+  };
+
+  if (doc.fullscreenElement) {
+    // La promesse est rejetée si plus rien n'est en plein écran au moment où
+    // elle s'exécute. Sans conséquence, mais il faut l'absorber.
+    void doc.exitFullscreen().catch(() => {});
+    return;
+  }
+
+  if (doc.webkitFullscreenElement) doc.webkitExitFullscreen?.();
+}
+
 function buildOverlay(): HTMLDivElement {
   const el = document.createElement("div");
   el.className = "panic-overlay";
@@ -391,12 +489,16 @@ function restoreTab(): void {
 }
 
 /**
- * Les trois actions du masquage sont isolées les unes des autres.
+ * Les actions du masquage sont isolées les unes des autres.
  *
  * Elles sont exécutées de la plus importante à la moins importante, et chacune
  * dans son propre try/catch : si la mise en pause échoue sur une vidéo exotique
  * ou si le déguisement de l'onglet se heurte à un DOM inattendu, l'écran est
  * quand même affiché. Une seule chose ne doit jamais échouer, et c'est elle.
+ *
+ * La sortie de plein écran vient avant la création de l'écran, pour laisser au
+ * navigateur le plus d'avance possible sur sa transition — c'est elle qui
+ * décide du moment où l'écran devient réellement visible.
  */
 function hide(): void {
   if (hidden) return;
@@ -406,6 +508,12 @@ function hide(): void {
     pauseAllMedia();
   } catch (err) {
     console.warn("[PanicButton] Could not pause every video.", err);
+  }
+
+  try {
+    exitFullscreen();
+  } catch (err) {
+    console.warn("[PanicButton] Could not leave fullscreen.", err);
   }
 
   // L'écran d'abord, sans filet : s'il échoue, il n'y a rien à sauver.

@@ -21,6 +21,32 @@ function ymlField(yml, field) {
 }
 
 /**
+ * Retire les commentaires du manifeste livré.
+ *
+ * src/source.yml est abondamment commenté — numérotation des réglages, pièges
+ * de YAML, raison d'un retrait — mais ces notes s'adressent à qui lit le code.
+ * Elles n'ont rien à faire dans le fichier qu'on installe.
+ *
+ * Seules les lignes dont le premier caractère non blanc est un # sont retirées.
+ * Un # en milieu de ligne appartient à une valeur — le #000000 d'une
+ * description — et doit rester.
+ *
+ * Exception faite de "# requires:", que build_site.sh lit pour déclarer les
+ * dépendances d'un plugin : commentaire pour YAML, donnée pour le dépôt.
+ */
+function stripYmlComments(yml) {
+  return yml
+    .split(/\r?\n/)
+    .filter((line) => !/^\s*#/.test(line) || /^\s*#\s*requires:/.test(line))
+    .join("\n")
+    // Les blocs retirés laissent des trous. Une ligne vide sépare encore les
+    // groupes de réglages, deux ou plus ne veulent plus rien dire.
+    .replace(/\n{3,}/g, "\n\n")
+    .replace(/^\n+/, "")
+    .replace(/\n+$/, "\n");
+}
+
+/**
  * Bandeau d'identification en tête des fichiers livrés (nom, version, et l'url
  * si le .yml en déclare une — sinon elle est simplement omise). Source unique :
  * src/source.yml, donc la version ne peut pas diverger entre ce qu'affiche
@@ -101,7 +127,13 @@ module.exports = {
   },
   plugins: [
     new CopyPlugin({
-      patterns: [{ from: "src/source.yml", to: pluginID + ".yml" }],
+      patterns: [
+        {
+          from: "src/source.yml",
+          to: pluginID + ".yml",
+          transform: (content) => stripYmlComments(content.toString()),
+        },
+      ],
     }),
     new MiniCssExtractPlugin({ filename: pluginID + ".css" }),
     new PrependBannerPlugin(banner),
